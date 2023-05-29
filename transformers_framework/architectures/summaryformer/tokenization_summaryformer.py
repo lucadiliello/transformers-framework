@@ -1,0 +1,7 @@
+from transformers.models.roberta.tokenization_roberta import RobertaTokenizer
+
+from transformers_framework.architectures.roberta.tokenization_roberta import RobertaExtendedTokenizerFast
+
+
+SummaryformerTokenizer = RobertaTokenizer
+SummaryformerExtendedTokenizer = RobertaExtendedTokenizerFast

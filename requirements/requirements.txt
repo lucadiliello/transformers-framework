@@ -1,0 +1,15 @@
+transformers>=4.28.2
+pytorch-lightning>=2.0.2
+torch>=2.0.1
+torchmetrics>=0.11.4
+rich>=10.14
+datasets>=2.12.0
+scipy>=1.7.3
+sentencepiece
+matplotlib
+protobuf==3.20.3
+tensorboardx>=2.5.1
+numba>=0.56.4
+blingfire>=0.1.8
+nltk>=3.8.1
+boto3

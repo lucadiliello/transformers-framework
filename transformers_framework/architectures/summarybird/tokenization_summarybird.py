@@ -1,0 +1,7 @@
+from transformers.models.roberta.tokenization_roberta_fast import RobertaTokenizerFast
+
+from transformers_framework.architectures.roberta.tokenization_roberta import RobertaExtendedTokenizerFast
+
+
+SummaryBirdTokenizerFast = RobertaTokenizerFast
+SummaryBirdExtendedTokenizerFast = RobertaExtendedTokenizerFast

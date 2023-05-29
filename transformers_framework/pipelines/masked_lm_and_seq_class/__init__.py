@@ -1,0 +1,10 @@
+from transformers_framework.pipelines.masked_lm_and_seq_class.deberta import DebertaMaskedLMAndSeqClassPipeline
+from transformers_framework.pipelines.masked_lm_and_seq_class.deberta_v2 import DebertaV2MaskedLMAndSeqClassPipeline
+from transformers_framework.pipelines.masked_lm_and_seq_class.roberta import RobertaMaskedLMAndSeqClassPipeline
+
+
+models = dict(
+    deberta=DebertaMaskedLMAndSeqClassPipeline,
+    deberta_v2=DebertaV2MaskedLMAndSeqClassPipeline,
+    roberta=RobertaMaskedLMAndSeqClassPipeline,
+)
