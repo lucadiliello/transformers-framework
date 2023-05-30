@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from transformers.models.deberta_v2 import DebertaV2TokenizerFast
 

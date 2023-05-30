@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 
 import numpy as np
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
@@ -54,7 +54,7 @@ def advanced_tokenization(
     if return_attention_mask is None:
         return_attention_mask = 'attention_mask' in tokenizer.model_input_names
     if return_token_type_ids is None:
-        return_token_type_ids = 'token_type_ids' in tokenizer.model_input_names
+        return_token_type_ids = 'token_type_ids' in tokenizer.model_input_names or extended_token_type_ids is not None
 
     tok_args = dict(
         add_special_tokens=add_special_tokens,
