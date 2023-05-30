@@ -25,6 +25,7 @@ def advanced_tokenization(
     return_dict: bool = True,
     is_split_into_words: bool = False,
     squeeze: bool = True,
+    separated: bool = False,
 ) -> BatchEncoding:
     r""" Encode one or more sequences together. If length of data is greater than 2, an ExtendedTokenizer is required.
 
@@ -44,6 +45,7 @@ def advanced_tokenization(
         return_dict: whether to return a simple dict or a batch encoding
         is_split_into_words: whether input text is already split into words
         squeeze: remove additional dimension from created numpy arrays
+        separated: whether to encode every input text separated and then concatenate the results
 
     Returns:
         A dict of numpy arrays
@@ -71,11 +73,13 @@ def advanced_tokenization(
     if is_split_into_words:
         data = [data]
 
-    if len(data) > 2:
+    if len(data) > 2 or separated:
         if not isinstance(tokenizer, ExtendedTokenizerFast):
             raise ValueError("Cannot encode more than 2 sequences without an ExtendedTokenizer")
 
-        encoded = tokenizer.encode_many(data, **tok_args, extended_token_type_ids=extended_token_type_ids)
+        encoded = (tokenizer.encode_many_separated if separated else tokenizer.encode_many)(
+            data, **tok_args, extended_token_type_ids=extended_token_type_ids
+        )
     else:
         encoded = tokenizer(*data, **tok_args)
 
@@ -97,39 +101,13 @@ def advanced_tokenization(
     return encoded
 
 
-def get_default_token_type_ids(
-    token_ids: List[List[int]], extended_token_type_ids: Union[int, List[int]] = None
-) -> List[int]:
+def get_default_token_type_ids(token_ids: List[List[int]], extended_token_type_ids: List[int]) -> List[int]:
     r""" Get default sequence of sentence type ids. """
-    if isinstance(extended_token_type_ids, int):
-        assert extended_token_type_ids > 0  # nosec
-        sentence_ids = [min(i, extended_token_type_ids - 1) for i in range(len(token_ids))]
-    elif isinstance(extended_token_type_ids, (list, tuple)):
-        assert len(extended_token_type_ids) == len(token_ids)  # nosec
-        sentence_ids = extended_token_type_ids
-    else:
-        assert extended_token_type_ids is None  # nosec
-        sentence_ids = list(range(len(token_ids)))
-    return sentence_ids
 
-
-def generate_sequential_token_type_ids(
-    input_ids: List[List[int]],
-    extended_token_type_ids: Union[int, List[int]],
-):
-    r""" Generate sequence ids for every array in `input_ids`. """
-    if isinstance(extended_token_type_ids, int):
-        return [
-            [min(i, extended_token_type_ids - 1)] * len(ids)
-            for i, ids in enumerate(input_ids)
-        ]
-    elif isinstance(extended_token_type_ids, (list, tuple)):
-        assert len(extended_token_type_ids) == len(input_ids)  # nosec
-        return [
-            [e] * len(ids)
-            for e, ids in zip(extended_token_type_ids, input_ids)
-        ]
-    else:
-        raise ValueError(
-            f"`extended_token_type_ids` must be integer or list of integers, got {extended_token_type_ids}"
+    if len(extended_token_type_ids) < len(token_ids):
+        extended_token_type_ids = (
+            extended_token_type_ids + [extended_token_type_ids[-1]] * (
+                len(token_ids) - len(extended_token_type_ids)
+            )
         )
+    return extended_token_type_ids[:len(token_ids)]

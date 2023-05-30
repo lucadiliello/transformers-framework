@@ -62,7 +62,7 @@ class RobertaExtendedTokenizerFast(RobertaTokenizerFast, ExtendedTokenizerFast):
         self,
         token_ids: List[List[int]],
         add_special_tokens: bool = True,
-        extended_token_type_ids: Union[int, List[int]] = None,
+        extended_token_type_ids: List[int] = None,
     ) -> List[int]:
         r"""
         Create a mask from the two sequences passed to be used in a sequences classification task.
@@ -88,7 +88,7 @@ class RobertaExtendedTokenizerFast(RobertaTokenizerFast, ExtendedTokenizerFast):
         """
 
         if extended_token_type_ids is None:  # RoBERTa uses a single token type by default
-            extended_token_type_ids = 1
+            extended_token_type_ids = [0]
 
         sentence_ids = get_default_token_type_ids(token_ids, extended_token_type_ids)
 

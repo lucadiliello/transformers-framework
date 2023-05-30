@@ -60,7 +60,7 @@ class DebertaV2ExtendedTokenizerFast(DebertaV2TokenizerFast, ExtendedTokenizerFa
         self,
         token_ids: List[List[int]],
         add_special_tokens: bool = True,
-        extended_token_type_ids: Union[int, List[int]] = None,
+        extended_token_type_ids: List[int] = None,
     ) -> List[int]:
         r"""
         Create a mask from the two sequences passed to be used in a sequences classification task.
@@ -81,7 +81,7 @@ class DebertaV2ExtendedTokenizerFast(DebertaV2TokenizerFast, ExtendedTokenizerFa
         """
 
         if extended_token_type_ids is None:  # DeBERTA V2/V3 allows 2 token types by default
-            extended_token_type_ids = 2
+            extended_token_type_ids = [0, 1]
 
         sentence_ids = get_default_token_type_ids(token_ids, extended_token_type_ids)
 

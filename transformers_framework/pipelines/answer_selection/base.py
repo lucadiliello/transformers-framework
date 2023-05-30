@@ -82,6 +82,8 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
     def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         kwargs['num_labels'] = 2  # always 2 classes for answer selection
+        if self.hyperparameters.k is not None:
+            kwargs['k'] = self.hyperparameters.k
         return super().configure_config(**kwargs)
 
     def step(self, batch: Dict) -> AnswerSelectionStepOutput:
@@ -215,6 +217,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
             max_sequence_length=self.hyperparameters.max_sequence_length,
             extended_token_type_ids=self.hyperparameters.extended_token_type_ids,
             k=self.hyperparameters.k,
+            separated=self.hyperparameters.separated,
         )
 
     @classmethod
@@ -224,6 +227,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         parser.add_argument('--label_column', type=str, required=True)
         parser.add_argument('--index_column', type=str, required=False)
         add_answer_selection_arguments(parser)
+        parser.add_argument('--separated', action="store_true")
         parser.add_argument_if_not('k', None, '--grouping', type=str, required=True, choices=('fixed', 'random'))
         parser.add_argument_if_not(
             'k', None, '--selection', type=str, required=False, choices=('best', 'worst'), default=None

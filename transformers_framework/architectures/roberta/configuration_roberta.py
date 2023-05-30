@@ -9,11 +9,13 @@ class RobertaExtendedConfig(RobertaConfig):
     Args:
         k (:obj:`int`, `optional`, defaults to None):
             Number of classifications to perform for each input example.
-        aggregate_hidden_states (:obj:`bool`, `optional`, defaults to False):
-            Aggregate all hidden states to compute classification logits.
+        classification_head_type (:obj:`str`, `optional`, defaults to 'IE_1'):
+            the type of multiple-predictions classification head
     """
 
-    def __init__(self, k: int = None, aggregate_hidden_states: bool = False, **kwargs):
+    def __init__(self, k: int = None, classification_head_type: str = 'IE_1', **kwargs):
         super().__init__(**kwargs)
         self.k = k
-        self.aggregate_hidden_states = aggregate_hidden_states
+
+        assert classification_head_type in ('IE_1', 'AE_1', 'IE_k', 'AE_k', 'RE_k')
+        self.classification_head_type = classification_head_type

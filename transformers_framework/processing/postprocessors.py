@@ -127,6 +127,7 @@ def answer_selection_processor(
     max_sequence_length: int,
     extended_token_type_ids: List[int] = None,
     k: int = 1,
+    separated: bool = False,
 ):
     r""" Tokenize text string and prepare for AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -136,6 +137,7 @@ def answer_selection_processor(
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
+        separated=separated,
     )
 
     res['index'] = np.array(sample[index_column])
@@ -158,6 +160,7 @@ def seq_class_processor(
     max_sequence_length: int,
     extended_token_type_ids: List[int] = None,
     k: int = 1,
+    separated: bool = False,
 ):
     r""" Tokenize text string and prepare for sequence classification. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -167,6 +170,7 @@ def seq_class_processor(
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
+        separated=separated,
     )
 
     res['seq_class_labels'] = np.array(sample[label_column])
@@ -258,6 +262,7 @@ def masked_lm_and_seq_class_processor(
     extended_token_type_ids: List[int] = None,
     k: int = 1,
     return_original_input_ids: bool = False,
+    separated: bool = False,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -268,6 +273,7 @@ def masked_lm_and_seq_class_processor(
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
         return_word_ids=True,
+        separated=separated,
     )
 
     masked_input_ids, masked_lm_labels = masked_language_modeling(
@@ -314,6 +320,7 @@ def masked_lm_and_answer_selection_processor(
     training: bool,
     extended_token_type_ids: List[int] = None,
     k: int = 1,
+    separated: bool = False,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -324,6 +331,7 @@ def masked_lm_and_answer_selection_processor(
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
         return_word_ids=True,
+        separated=separated,
     )
 
     masked_input_ids, masked_lm_labels = masked_language_modeling(

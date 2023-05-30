@@ -47,6 +47,147 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
                 f"of strings or a list/tuple of integers."
             )
 
+    def encode_many_separated(
+        self,
+        texts: Union[TextInput, PreTokenizedInput, EncodedInput],
+        add_special_tokens: bool = True,
+        padding: Union[bool, str, PaddingStrategy] = False,
+        truncation: Union[bool, str, TruncationStrategy] = False,
+        max_length: Optional[int] = None,
+        stride: int = 0,
+        pad_to_multiple_of: Optional[int] = None,
+        return_tensors: Optional[Union[str, TensorType]] = None,
+        return_token_type_ids: Optional[bool] = None,
+        return_attention_mask: Optional[bool] = None,
+        return_overflowing_tokens: bool = False,
+        return_special_tokens_mask: bool = False,
+        return_offsets_mapping: bool = False,
+        return_length: bool = False,
+        extended_token_type_ids: List[int] = None,
+        verbose: bool = True,
+        **kwargs,
+    ) -> BatchEncoding:
+        r"""
+        Tokenize and prepare for the model many consecutive sequences equally spaced using padding tokens.
+
+        Args:
+            texts (:obj:`str`, :obj:`List[str]` or `List[List[int]]`:
+                The sequences to be encoded together. This should be a list of strings or a list of integers
+                (tokenized string ids using the ``convert_tokens_to_ids`` method).
+        """
+        assert pad_to_multiple_of is None
+        assert max_length is not None
+        assert return_overflowing_tokens is False
+
+        # Backward compatibility for 'truncation_strategy', 'pad_to_max_length'
+        padding_strategy, truncation_strategy, max_length, kwargs = self._get_padding_truncation_strategies(
+            padding=padding,
+            truncation=truncation,
+            max_length=max_length,
+            pad_to_multiple_of=pad_to_multiple_of,
+            verbose=verbose,
+            **kwargs,
+        )
+
+        if truncation_strategy in (
+            TruncationStrategy.DO_NOT_TRUNCATE, TruncationStrategy.ONLY_FIRST, TruncationStrategy.ONLY_SECOND
+        ):
+            raise ValueError(
+                f"truncation_strategy must be set to {TruncationStrategy.LONGEST_FIRST} (got {truncation_strategy})"
+            )
+
+        if padding != PaddingStrategy.MAX_LENGTH:
+            raise ValueError(f"pudding_strategy must be `MAX_LENGTH`, got {padding_strategy})")
+
+        # Load from model defaults
+        if return_token_type_ids is None:
+            return_token_type_ids = "token_type_ids" in self.model_input_names
+        if return_attention_mask is None:
+            return_attention_mask = "attention_mask" in self.model_input_names
+
+        # work only on input text sequences
+        if isinstance(texts, str):
+            texts = [texts]
+
+        # prepare output dict
+        encoded_inputs = {'input_ids': []}
+        word_ids = []
+        if return_attention_mask:
+            encoded_inputs['attention_mask'] = []
+        encoded_inputs['special_tokens_mask'] = []
+        if return_offsets_mapping:
+            encoded_inputs['offset_mapping'] = []
+
+        # Encode!
+        for text in texts:
+            encoding = self.__call__(
+                text,
+                add_special_tokens=add_special_tokens,
+                padding=padding_strategy,
+                truncation=truncation_strategy,
+                max_length=max_length,
+                stride=stride,
+                return_attention_mask=return_attention_mask,
+                return_token_type_ids=False,
+                return_overflowing_tokens=False,
+                return_special_tokens_mask=True,
+                return_offsets_mapping=return_offsets_mapping,
+                return_length=return_length,
+            )
+
+            encoded_inputs['input_ids'].append(encoding.input_ids)
+            word_ids.append(encoding.word_ids())
+
+            if return_attention_mask:
+                encoded_inputs['attention_mask'].append(encoding.attention_mask)
+            encoded_inputs['special_tokens_mask'].append(encoding.special_tokens_mask)
+            if return_offsets_mapping:
+                encoded_inputs['offset_mapping'].append(encoding.offset_mapping)
+
+        # build token type ids
+        if return_token_type_ids:
+            encoded_inputs["token_type_ids"] = self.create_token_type_ids_from_many_sequences(
+                encoded_inputs['input_ids'], add_special_tokens=False, extended_token_type_ids=extended_token_type_ids
+            )
+
+        # convert special_tokens_mask, attention_mask and offset_mapping to flat format
+        if return_attention_mask:
+            encoded_inputs['attention_mask'] = sum(encoded_inputs['attention_mask'], [])
+        encoded_inputs['special_tokens_mask'] = sum(encoded_inputs['special_tokens_mask'], [])
+        if return_offsets_mapping:
+            encoded_inputs['offset_mapping'] = sum(encoded_inputs['offset_mapping'], [])
+
+        # build sequence ids even if this is not a fast tokenizer
+        sequence_ids = self.create_sequence_ids_from_many_sequences(
+            encoded_inputs['input_ids'], encoded_inputs['special_tokens_mask'], add_special_tokens=False
+        )
+
+        if not return_special_tokens_mask:
+            del encoded_inputs['special_tokens_mask']
+
+        # finally flatten input ids
+        encoded_inputs['input_ids'] = sum(encoded_inputs['input_ids'], [])
+
+        if return_length:
+            encoded_inputs["length"] = len(encoded_inputs["input_ids"])
+
+        # this BatchEncoding object will be slow tokenizers like
+        res = BatchEncoding(encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=True)
+
+        # we need to manually enable sequence ids in BatchEncoding because is not enabled by default in slow tokenizers
+        add_sequence_ids_to_batch_encoding(res, sequence_ids)
+
+        # this ensures different texts has no overlapping sequence ids
+        word_ids = sum(fix_word_ids(word_ids), [])
+
+        # we need to manually enable word ids in BatchEncoding because is not enabled by default in slow tokenizers
+        add_word_ids_to_batch_encoding(res, word_ids)
+
+        # Check lengths
+        self._eventual_warn_about_too_long_sequence(encoded_inputs["input_ids"], max_length * len(texts), verbose)
+
+        return res
+
     def encode_many(
         self,
         texts: Union[TextInput, PreTokenizedInput, EncodedInput],
@@ -63,9 +204,9 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
         return_special_tokens_mask: bool = False,
         return_offsets_mapping: bool = False,
         return_length: bool = False,
-        extended_token_type_ids: int = None,
+        extended_token_type_ids: List[int] = None,
         verbose: bool = True,
-        **kwargs
+        **kwargs,
     ) -> BatchEncoding:
         r"""
         Tokenize and prepare for the model many consecutive sequences.
@@ -91,17 +232,14 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
                 text, return_offsets_mapping=return_offsets_mapping, return_word_ids=True, **kwargs
             ) for text in texts
         ]))
+
         # need lists and not tuples
         input_ids = list(input_ids)
         word_ids = list(word_ids)
+        offsets_map = list(offsets_map) if return_offsets_mapping else None
 
-        if not return_offsets_mapping:
-            offsets_map = None  # was a list of None
-        else:
-            offsets_map = list(offsets_map)
-
-        return self.prepare_for_model_many(
-            input_ids,
+        kwargs = dict(
+            input_ids=input_ids,
             offsets_map=offsets_map,
             word_ids=word_ids,
             add_special_tokens=add_special_tokens,
@@ -120,11 +258,14 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
             return_length=return_length,
             verbose=verbose,
             extended_token_type_ids=extended_token_type_ids,
+            **kwargs,
         )
+
+        return self.prepare_for_model_many(**kwargs)
 
     def prepare_for_model_many(
         self,
-        input_ids: List[List[int]],
+        input_ids: List[List[int]] = None,
         offsets_map: List[List[Tuple[int, int]]] = None,
         word_ids: List[List[int]] = None,
         add_special_tokens: bool = True,
@@ -142,7 +283,7 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
         return_length: bool = False,
         verbose: bool = True,
         prepend_batch_axis: bool = False,
-        extended_token_type_ids: int = None,
+        extended_token_type_ids: List[int] = None,
     ) -> BatchEncoding:
         r"""
         Prepares a tuple of sequences of inputs ids so that it can be used by the model. It
@@ -263,9 +404,7 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
                 word_ids += [None] * (len(encoded_inputs["input_ids"]) - len(word_ids))
 
         # this BatchEncoding object will be slow tokenizers like
-        res = BatchEncoding(
-            encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis
-        )
+        res = BatchEncoding(encoded_inputs, tensor_type=return_tensors, prepend_batch_axis=prepend_batch_axis)
 
         # we need to manually enable sequence ids in BatchEncoding because is not enabled by default in slow tokenizers
         add_sequence_ids_to_batch_encoding(res, sequence_ids)
@@ -320,7 +459,7 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
         """
 
         if num_tokens_to_remove <= 0:
-            return input_ids, offsets_map, []
+            return input_ids, offsets_map, word_ids, []
 
         if not isinstance(truncation_strategy, TruncationStrategy):
             truncation_strategy = TruncationStrategy(truncation_strategy)
@@ -381,7 +520,7 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
     ) -> List[int]:
         r""" Create list of sequence ids automatically starting from token type ids and special tokens mask. """
         extended_token_type_ids = self.create_token_type_ids_from_many_sequences(
-            token_ids, add_special_tokens=add_special_tokens, extended_token_type_ids=len(token_ids)
+            token_ids, add_special_tokens=add_special_tokens, extended_token_type_ids=range(len(token_ids))
         )
         return [
             token_type if not special_token else None
@@ -429,7 +568,7 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
         self,
         token_ids: List[List[int]],
         add_special_tokens: bool = True,
-        extended_token_type_ids: Union[int, List[int]] = None,
+        extended_token_type_ids: List[int] = None,
     ) -> List[int]:
         r"""
         Create a mask from the two sequences passed to be used in a sequences classification task. A BERT sequences
@@ -481,12 +620,16 @@ def add_word_ids_to_batch_encoding(batch_encoding: BatchEncoding, word_ids: List
 
 def fix_word_ids(word_ids: List[List[int]]) -> List[int]:
     r""" Fix word ids such that every sublists starts from the id following the last in the previous list. """
+
     def get_highest_word_id(seq: List[int]):
         arg = [v for v in seq if v is not None]
         return max(arg) - min(arg) if arg else 0
+
     res = []
     actual_max = 0
+
     for part in word_ids:
         res.append([p + actual_max if p is not None else None for p in part])
         actual_max += get_highest_word_id(part) + 1
+
     return res
