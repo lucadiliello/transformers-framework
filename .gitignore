@@ -2,7 +2,6 @@
 outputs/
 input/
 science/
-tests/
 lightning_logs/
 
 # Utils
