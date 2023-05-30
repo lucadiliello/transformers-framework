@@ -209,6 +209,7 @@ class ArrowDataModule(LightningDataModule):
             pin_memory=True,
             collate_fn=self.model.collate_fn,
             shuffle=shuffle,
+            multiprocessing_context='fork' if torch.backends.mps.is_available() else None,
         )
 
     def train_dataloader(self):

@@ -11,10 +11,10 @@ python -m transformers_framework \
     --output_dir /tmp/transformers_framework \
     \
     --batch_size 32 \
-    --train_dataset lucadiliello/wikiqa/train \
-    --valid_dataset lucadiliello/wikiqa/dev \
-    --test_dataset lucadiliello/wikiqa/test \
-    --input_columns question answer \
+    --train_dataset lucadiliello/wikiqa_grouped/train \
+    --valid_dataset lucadiliello/wikiqa_grouped/dev \
+    --test_dataset lucadiliello/wikiqa_grouped/test \
+    --input_columns question '*answer' \
     --label_column label \
     --index_column key \
     \

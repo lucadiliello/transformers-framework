@@ -1,8 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Any, Dict, List, Literal
 
-from datasets import Dataset, Sequence
-from tqdm import tqdm
+from datasets import Dataset
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from transformers_framework.utilities import IGNORE_IDX
@@ -141,7 +140,6 @@ def answer_selection_grouping(
     k: int = None,
     num_workers: int = cpu_count(),
     batch_size: int = None,
-    group: bool = None,
     pad: bool = True,
     grouping: str = Literal['random', 'fixed'],
     selection: Literal['best', 'worst'] = None,
@@ -161,14 +159,9 @@ def answer_selection_grouping(
         assert selection in ('best', 'worst')
 
     question_column, answer_column = input_columns
-
-    # check whether grouping is needed
-    if group is None:
-        group = not isinstance(dataset.features[answer_column], Sequence)
-
-    # group dataset on question column
-    if group:
-        dataset = group_dataset_over_column(dataset, pivot_column=question_column)
+    # '*' or '+' may be used for expansion later in postprocessing
+    if answer_column.startswith('*') or answer_column.startswith('+'):
+        answer_column = answer_column[1:]
 
     fn_kwargs = dict(
         question_column=question_column,
@@ -196,24 +189,3 @@ def answer_selection_grouping(
         )
 
     return dataset
-
-
-def group_dataset_over_column(
-    dataset: Dataset,
-    pivot_column: str = None,
-):
-    """ Group dataset on pivot column. """
-    index = dict()
-    other_columns = dataset.column_names
-    other_columns.remove(pivot_column)
-
-    for example in tqdm(dataset, desc="Grouping dataset..."):
-        if example[pivot_column] not in index:
-            index[example[pivot_column]] = dict()
-        for other_column in other_columns:
-            if other_column not in index[example[pivot_column]]:
-                index[example[pivot_column]][other_column] = []
-            index[example[pivot_column]][other_column].append(example[other_column])
-
-    index = [{pivot_column: q, **v} for q, v in index.items()]
-    return Dataset.from_list(index)

@@ -272,7 +272,7 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 python -m transformers_framework \
     --num_warmup_steps 10000 \
     --monitor valid/answer_selection/mean_average_precision \
     --val_check_interval 0.5 \
-    --num_workers 0  # there are issues with more than 0 workers on Apple Silicon and PyTorch
+    --num_workers 4
 ```
 
 For more examples, look at the scripts in `tests/scripts`.
