@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
 import numpy as np
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
@@ -10,6 +10,7 @@ from transformers_framework.language.modeling import (
     random_token_substitution,
 )
 from transformers_framework.utilities import IGNORE_IDX
+from transformers_framework.utilities.arguments import extract_text_fields_with_multiple_formats
 from transformers_framework.utilities.functional import shift_tokens_right
 from transformers_framework.utilities.numpy import numpy_num_elements
 from transformers_framework.utilities.processors import (
@@ -128,64 +129,14 @@ def answer_selection_processor(
     k: int = 1,
 ):
     r""" Tokenize text string and prepare for AS2. """
-    data = []
-    for c in input_columns:
-        if isinstance(sample[c], str):
-            data.append(sample[c])
-        elif isinstance(sample[c], Iterable):
-            data += list(sample[c])
-        else:
-            raise ValueError(f"Value {sample[c]} cannot be encoded with tokenizers")
+    text = extract_text_fields_with_multiple_formats(sample, input_columns)
 
     res = advanced_tokenization(
-        *data,
+        *text,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
     )
-
-    res['index'] = np.array(sample[index_column])
-    res['seq_class_labels'] = np.array(sample[label_column])
-
-    if k is not None:
-        assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
-        assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
-            f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
-        )
-
-    return res
-
-
-def split_answer_selection_processor(
-    sample: Dict[str, Any],
-    input_columns: str,
-    index_column: str,
-    label_column: str,
-    tokenizer: PreTrainedTokenizerBase,
-    max_sequence_length: int,
-    extended_token_type_ids: List[int] = None,
-    k: int = 1,
-):
-    r""" Tokenize text string and prepare for splitted AS2. """
-    query_res = advanced_tokenization(
-        *[sample[c] for c in input_columns[:1]],
-        tokenizer=tokenizer,
-        max_sequence_length=max_sequence_length,
-        extended_token_type_ids=extended_token_type_ids[:1] if extended_token_type_ids else None,
-    )
-
-    answer_res = advanced_tokenization(
-        *[sample[c] for c in input_columns[1:]],
-        tokenizer=tokenizer,
-        max_sequence_length=max_sequence_length,
-        extended_token_type_ids=extended_token_type_ids[1:] if extended_token_type_ids else None,
-    )
-
-    res = dict()
-    for key, value in query_res.items():
-        res[f"query_{key}"] = value
-    for key, value in answer_res.items():
-        res[f"answer_{key}"] = value
 
     res['index'] = np.array(sample[index_column])
     res['seq_class_labels'] = np.array(sample[label_column])
@@ -209,9 +160,10 @@ def seq_class_processor(
     k: int = 1,
 ):
     r""" Tokenize text string and prepare for sequence classification. """
+    text = extract_text_fields_with_multiple_formats(sample, input_columns)
 
     res = advanced_tokenization(
-        *[sample[c] for c in input_columns],
+        *text,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
@@ -308,8 +260,10 @@ def masked_lm_and_seq_class_processor(
     return_original_input_ids: bool = False,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
+    text = extract_text_fields_with_multiple_formats(sample, input_columns)
+
     data = advanced_tokenization(
-        *[sample[c] for c in input_columns],
+        *text,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,
@@ -362,8 +316,10 @@ def masked_lm_and_answer_selection_processor(
     k: int = 1,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
+    text = extract_text_fields_with_multiple_formats(sample, input_columns)
+
     data = advanced_tokenization(
-        *[sample[c] for c in input_columns],
+        *text,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         extended_token_type_ids=extended_token_type_ids,

@@ -1,5 +1,5 @@
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Iterable, List, Union
 
 from transformers_framework.utilities.initilization import initialize_precision, initialize_strategy
 from transformers_framework.utilities.logging import rank_zero_warn
@@ -175,6 +175,75 @@ def is_already_defined_in_argparse(parser: ArgumentParser, name: str) -> bool:
         if name == action.dest:
             return True
     return False
+
+
+def extract_text_fields_with_multiple_formats(sample: Dict[str, str], fields: List[str]) -> List[str]:
+    r""" Extract data from fields with different formats.
+    
+    Args:
+        sample (`Dict`): the input examples from which data is extracted
+        fields: (`List[str]`): list of keys that define how to extract data from the sample
+            Each field can be one of the following:
+            1) a simple string: will extract the corresponding string field from sample, for example "question"
+            2) a string starting with "*": expects sample[field] to be a list, that will be expanded and returned
+            3) a string starting with "+": expects sample[field] to be a list, that will be concatenated
+                with a space and returned
+            4) a string containing ":": the field will be split on the semicolon character and the corresponding
+                fields in sample will be concatenated with a space in the middle.
+
+    Example:
+        sample = {
+            'question': 'How are you today?',
+            'answers': ['I feel lucky', 'Today I feel good'],
+            'context': 'A question about feelings',
+        }
+
+        - fields = ['question', 'context'] -> ['How are you today?', 'A question about feelings']
+        - fields = ['question', '+answers'] -> ['How are you today?', 'I feel lucky Today I feel good']
+        - fields = ['question', '*answers'] -> ['How are you today?', 'I feel lucky', 'Today I feel good']
+        - fields = ['question:context', '*answers'] -> [
+            'How are you today? A question about feelings', 'I feel lucky', 'Today I feel good'
+        ]
+        - fields = ['+answers', 'question:context'] -> [
+            'I feel lucky Today I feel good', 'How are you today? A question about feelings',
+        ]
+
+    Forbidden combinations:
+        - fields = ['question:answers']
+        - fields = ['+question']
+        - fields = [':context']
+    """
+
+    res = []
+    for field in fields:
+        # 1 and 4
+        if not field.startswith('*') and not field.startswith('+'):
+            if ':' not in field:  # 1
+                assert field in sample and isinstance(sample[field], str)
+                res.append(sample[field])
+            else:  # 4
+                tmp = []
+                for subfield in field.split(':'):
+                    assert subfield in sample and isinstance(sample[subfield], str)
+                    tmp.append(sample[subfield])
+                res.append(' '.join(tmp))
+
+        # 2 and 3
+        elif field.startswith('*') or field.startswith('+'):
+            concatenation = field.startswith('+')
+            field = field[1:]
+
+            assert ':' not in field
+            assert field in sample and isinstance(sample[field], Iterable) and not isinstance(sample[field], str)
+
+            data = list(sample[field])
+            for d in data:
+                assert isinstance(d, str)
+
+            data = [' '.join(data)] if concatenation else data
+            res += data
+
+    return res
 
 
 def add_seq_class_arguments(parser: ArgumentParser):

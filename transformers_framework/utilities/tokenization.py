@@ -43,6 +43,7 @@ def advanced_tokenization(
         return_sequence_ids: return the sequence ids converted to numpy array (None is IGNORE_IDX)
         return_dict: whether to return a simple dict or a batch encoding
         is_split_into_words: whether input text is already split into words
+        squeeze: remove additional dimension from created numpy arrays
 
     Returns:
         A dict of numpy arrays

@@ -25,7 +25,7 @@ setuptools.setup(
     description='Easily train and test Transformers models with Lightning',
     long_description=load_long_description(),
     long_description_content_type="text/markdown",
-    url='https://github.com/lucadiliello/transformers_framework.git',
+    url='https://github.com/lucadiliello/transformers-framework.git',
     author='Luca Di Liello',
     author_email='luca.diliello@unitn.it',
     license='GNU v2',
