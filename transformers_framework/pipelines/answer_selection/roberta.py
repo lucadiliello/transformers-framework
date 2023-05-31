@@ -3,7 +3,9 @@ from transformers.models.roberta.modeling_roberta import RobertaForSequenceClass
 from transformers.models.roberta.tokenization_roberta_fast import RobertaTokenizerFast
 
 from transformers_framework.architectures.roberta.configuration_roberta import RobertaExtendedConfig
-from transformers_framework.architectures.roberta.modeling_roberta import RobertaForExtendedSequenceClassification
+from transformers_framework.architectures.roberta.modeling_extended_roberta import (
+    RobertaForExtendedSequenceClassification,
+)
 from transformers_framework.architectures.roberta.tokenization_roberta import RobertaExtendedTokenizerFast
 from transformers_framework.pipelines.answer_selection.base import AnswerSelectionPipeline
 

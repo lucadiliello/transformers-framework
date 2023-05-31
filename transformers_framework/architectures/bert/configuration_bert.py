@@ -1,19 +1,14 @@
 from transformers.models.bert.configuration_bert import BertConfig
 
+from transformers_framework.architectures.configuration_utils import ExtendedConfig
 
-class BertExtendedConfig(BertConfig):
+
+class BertExtendedConfig(BertConfig, ExtendedConfig):
     r"""
     The :class:`~transformers.BertConfig` reuses the
-    same defaults. Please check the parent class for more information.
-
-    Args:
-        k (:obj:`int`, `optional`, defaults to None):
-            Number of classifications to perform for each input example.
-        aggregate_hidden_states (:obj:`bool`, `optional`, defaults to False):
-            Aggregate all hidden states to compute classification logits.
+    same defaults. Please check the parent classes for more information.
     """
 
-    def __init__(self, k: int = None, aggregate_hidden_states: bool = False, **kwargs):
-        super().__init__(**kwargs)
-        self.k = k
-        self.aggregate_hidden_states = aggregate_hidden_states
+    def __init__(self, **kwargs):
+        super(BertConfig, self).__init__(**kwargs)
+        super(ExtendedConfig, self).__init__(**kwargs)

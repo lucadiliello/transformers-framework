@@ -1,19 +1,14 @@
 from transformers.models.deberta_v2.configuration_deberta_v2 import DebertaV2Config
 
+from transformers_framework.architectures.configuration_utils import ExtendedConfig
 
-class DebertaV2ExtendedConfig(DebertaV2Config):
+
+class DebertaV2ExtendedConfig(DebertaV2Config, ExtendedConfig):
     r"""
     The :class:`~transformers.DebertaV2Config` reuses the
-    same defaults. Please check the parent class for more information.
-
-    Args:
-        k (:obj:`int`, `optional`, defaults to None):
-            Number of classifications to perform for each input example.
-        aggregate_hidden_states (:obj:`bool`, `optional`, defaults to False):
-            Aggregate all hidden states to compute classification logits.
+    same defaults. Please check the parent classes for more information.
     """
 
-    def __init__(self, k: int = None, aggregate_hidden_states: bool = False, **kwargs):
-        super().__init__(**kwargs)
-        self.k = k
-        self.aggregate_hidden_states = aggregate_hidden_states
+    def __init__(self, **kwargs):
+        super(DebertaV2Config, self).__init__(**kwargs)
+        super(ExtendedConfig, self).__init__(**kwargs)
