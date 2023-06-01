@@ -74,6 +74,9 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         if self.hyperparameters.k is not None:
             self.preprocess = MethodType(preprocess, self)
 
+        if self.hyperparameters.separated:
+            self.MODEL_INPUT_NAMES_TO_REDUCE = []  # do not shrink batches when using separated mode (joint models)
+
     def requires_extended_tokenizer(self):
         return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.k is not None
 
