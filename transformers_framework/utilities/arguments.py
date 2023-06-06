@@ -471,12 +471,14 @@ def get_generation_args_from_hyperparameters(hyperparameters: Namespace) -> Dict
 
 
 def add_trainer_args(parser: ArgumentParser):
+    r""" Add to the argument parser all the training arguments regarding the hardware and the setup. """
+    allowed_prec = ('16-mixed', 'bf16-mixed', '32-true', '64-true')
 
     parser.add_argument('--accelerator', type=str, default="auto", required=False)
     parser.add_argument('--strategy', type=str, default="auto", required=False)
     parser.add_argument('--devices', type=int, default="auto", required=False)
     parser.add_argument('--num_nodes', type=int, default=1, required=False)
-    parser.add_argument('--precision', type=int_or_str, default=16, required=False, choices=(16, 'bf16', 32, 64))
+    parser.add_argument('--precision', type=str, default=allowed_prec[0], required=False, choices=allowed_prec)
     parser.add_argument('--fast_dev_run', action="store_true")
     parser.add_argument('--max_epochs', type=int, default=None, required=False)
     parser.add_argument('--min_epochs', type=int, default=None, required=False)

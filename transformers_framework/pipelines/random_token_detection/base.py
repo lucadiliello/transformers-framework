@@ -118,7 +118,7 @@ class RandomTokenDetectionPipeline(Pipeline):
         r""" Process single samples to add denoising objective. """
         return random_token_detection_processor(
             sample=sample,
-            input_column=self.hyperparameters.input_column,
+            input_columns=self.hyperparameters.input_columns,
             probability=self.hyperparameters.probability,
             tokenizer=self.tokenizer,
             max_sequence_length=self.hyperparameters.max_sequence_length,
@@ -128,5 +128,5 @@ class RandomTokenDetectionPipeline(Pipeline):
     @classmethod
     def add_argparse_args(cls, parser: FlexibleArgumentParser):
         super().add_argparse_args(parser)
-        parser.add_argument('--input_column', type=str, required=True)
+        parser.add_argument('--input_columns', type=str, nargs='+', required=True)
         add_random_token_detection_arguments(parser)

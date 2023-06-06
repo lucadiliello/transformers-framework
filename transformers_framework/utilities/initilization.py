@@ -4,6 +4,7 @@ from typing import Union
 import torch
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.strategies.strategy import Strategy
+import os
 
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
@@ -73,25 +74,32 @@ def initialize_precision(hyperparameters: Namespace) -> Union[str, int]:
     r""" Checks over precision and used model. """
 
     # no gradient clipping needed if running with fp16
-    if hyperparameters.precision == 16 and hyperparameters.gradient_clip_val:
+    if hyperparameters.precision == '16-mixed' and hyperparameters.gradient_clip_val:
         rank_zero_warn(
-            "There is no need to use `gradient_clip_val` with `precision=16` since gradients are scaled"
-            " automatically before the optimization step."
+            "There is no need to use `gradient_clip_val` with `precision=16-mixed` "
+            "since gradients are scaled automatically before the optimization step."
         )
 
     # precision speedup
-    rank_zero_info("Activating fast FP32 matmul")
-    torch.set_float32_matmul_precision('medium')
+    fast_fp32_matmul = os.environ.get('TRANSFORMERS_FRAMEWORK_FP32_MATMUL_PRECISION', 'medium')
+    rank_zero_info(f"Using FP32 matmul: {fast_fp32_matmul}")
+    torch.set_float32_matmul_precision(fast_fp32_matmul)
 
-    if hyperparameters.accelerator == "gpu" and hyperparameters.precision not in (16, 'bf16'):
-        rank_zero_info("Activating fast TF32 matmul")
-        torch.backends.cudnn.allow_tf32 = True
-        torch.backends.cuda.matmul.allow_tf32 = True
+    if hyperparameters.accelerator == "gpu":
+        cudnn_enabled = eval(os.environ.get('TRANSFORMERS_FRAMEWORK_CUDNN_ENABLED', 'True'))
+        allow_tf32 = eval(os.environ.get('TRANSFORMERS_FRAMEWORK_TF32_ENABLED', 'True'))
 
-    if 't5' in hyperparameters.model and hyperparameters.precision == 16 and (
+        rank_zero_info(f"Using CUDNN: {cudnn_enabled}")
+        rank_zero_info(f"Using fast TF32 matmul: {allow_tf32}")
+
+        torch.backends.cudnn.enabled = cudnn_enabled
+        torch.backends.cudnn.allow_tf32 = allow_tf32
+        torch.backends.cuda.matmul.allow_tf32 = allow_tf32
+
+    if 't5' in hyperparameters.model and hyperparameters.precision == '16-mixed' and (
         'accelerator' not in hyperparameters or hyperparameters.accelerator != 'mps'
     ):
         rank_zero_warn("Precision set to 16 (FP16) but model is T5-like. Changing precision to bf16 for you.")
-        return 'bf16'
+        return 'bf16-mixed'
 
     return hyperparameters.precision

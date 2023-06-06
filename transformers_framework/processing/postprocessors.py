@@ -494,15 +494,17 @@ def token_class_processor(
 
 def random_token_detection_processor(
     sample: Dict[str, Any],
-    input_column: str,
+    input_columns: str,
     probability: float,
     tokenizer: PreTrainedTokenizerBase,
     max_sequence_length: int,
     whole_word_detection: bool,
 ):
     r""" Tokenize text string and prepare for RTD. """
+    data = [sample[input_column] for input_column in input_columns if sample[input_column]]
+
     data = advanced_tokenization(
-        sample[input_column],
+        *data,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         return_word_ids=True,
