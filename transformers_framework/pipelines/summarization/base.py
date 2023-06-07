@@ -127,6 +127,7 @@ class SummarizationPipeline(Pipeline):
 
     def on_validation_epoch_start(self):
         r""" Load BERTScore model. """
+        super().on_validation_epoch_start()
         if hasattr(self, 'valid_bertscore'):
             self.valid_bertscore.load()
         if hasattr(self, 'valid_bleurt'):
@@ -134,6 +135,7 @@ class SummarizationPipeline(Pipeline):
 
     def on_validation_epoch_end(self):
         r""" Unload BERTScore model. """
+        super().on_validation_epoch_end()
         if hasattr(self, 'valid_bertscore'):
             self.valid_bertscore.unload()
         if hasattr(self, 'valid_bleurt'):
@@ -165,6 +167,7 @@ class SummarizationPipeline(Pipeline):
 
     def on_test_epoch_start(self):
         r""" Load BERTScore model. """
+        super().on_test_epoch_start()
         if hasattr(self, 'test_bertscore'):
             self.test_bertscore.load()
         if hasattr(self, 'test_bleurt'):
@@ -172,6 +175,7 @@ class SummarizationPipeline(Pipeline):
 
     def on_test_epoch_end(self):
         r""" Unload BERTScore model. """
+        super().on_test_epoch_end()
         if hasattr(self, 'test_bertscore'):
             self.test_bertscore.unload()
         if hasattr(self, 'test_bleurt'):

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Union
+import torch
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import RunningStage
@@ -103,6 +104,11 @@ class Pipeline(LightningModule, OptimizersMixin, MetricsMixin, PropertiesMixin, 
     def on_validation_epoch_start(self):
         r""" Reset validation metrics. """
         MetricsMixin.on_validation_epoch_start(self)
+
+    def on_validation_epoch_end(self):
+        r""" May avoid some memory errors. """
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def on_test_epoch_start(self):
         r""" Reset test metrics. """

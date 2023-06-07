@@ -191,6 +191,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
     def on_validation_epoch_end(self):
         r""" Just log metrics. """
+        super().on_validation_epoch_end()
         self.log(ANSWER_SELECTION_MAP, self.valid_map.compute())
         self.log(ANSWER_SELECTION_MRR, self.valid_mrr.compute())
         self.log(ANSWER_SELECTION_P_1, self.valid_p1.compute())
@@ -199,6 +200,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
     def on_test_epoch_end(self):
         r""" Just log metrics. """
+        super().on_test_epoch_end()
         self.log(ANSWER_SELECTION_MAP, self.test_map.compute())
         self.log(ANSWER_SELECTION_MRR, self.test_mrr.compute())
         self.log(ANSWER_SELECTION_P_1, self.test_p1.compute())

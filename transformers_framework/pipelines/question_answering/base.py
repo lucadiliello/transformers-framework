@@ -192,6 +192,7 @@ class QuestionAnsweringPipeline(Pipeline):
 
     def on_validation_epoch_end(self):
         r""" Compute and log global EM and F1 for machine reading. """
+        super().on_validation_epoch_end()
         exact_match, f1 = self.eval_epoch_end(outputs=self.validation_step_outputs)
 
         self.log(QUESTION_ANSWERING_EXACT_MATCH, exact_match)
@@ -199,6 +200,7 @@ class QuestionAnsweringPipeline(Pipeline):
 
     def on_test_epoch_end(self):
         r""" Compute and log global EM and F1 for machine reading. """
+        super().on_test_epoch_end()
         exact_match, f1 = self.eval_epoch_end(outputs=self.test_step_outputs)
 
         self.log(QUESTION_ANSWERING_EXACT_MATCH, exact_match)
