@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 import torch
+from pytorch_lightning.utilities.memory import garbage_collection_cuda
 from torch import nn
 
 from transformers_framework.utilities import IGNORE_IDX
@@ -149,7 +150,13 @@ def split_batch(batch: Dict[str, torch.Tensor], size: int) -> List[Dict[str, tor
     keys = list(batch.keys())
 
     return [
-        {k: v for k, v in zip(keys, data)} for data in zip(
-            *[torch.split(batch[k], size, dim=0) for k in keys]
-        )
+        {k: v for k, v in zip(keys, data)} for data in zip(*[torch.split(batch[k], size, dim=0) for k in keys])
     ]
+
+
+def clean_device_cache():
+    r""" Clean devices cache on different accelerators. """
+    if torch.cuda.is_available():  # NVIDIA CUDA and AMD ROCm
+        garbage_collection_cuda()
+    elif torch.backends.mps.is_available():  # Apple MPS
+        torch.mps.empty_cache()

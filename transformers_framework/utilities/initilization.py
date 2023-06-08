@@ -1,10 +1,12 @@
+import os
 from argparse import Namespace
 from typing import Union
 
 import torch
+from pytorch_lightning.profilers.profiler import Profiler
+from pytorch_lightning.profilers.pytorch import PyTorchProfiler
 from pytorch_lightning.strategies.ddp import DDPStrategy
 from pytorch_lightning.strategies.strategy import Strategy
-import os
 
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
@@ -103,3 +105,21 @@ def initialize_precision(hyperparameters: Namespace) -> Union[str, int]:
         return 'bf16-mixed'
 
     return hyperparameters.precision
+
+
+def initialize_profiler(hyperparameters: Namespace) -> Union[str, Profiler]:
+    r""" Initialize profiler in the case advanced GPU checks are required. """
+    if hyperparameters.profiler is None or hyperparameters.profiler != 'cpu_gpu_memory':
+        return hyperparameters.profiler
+
+    return PyTorchProfiler(
+        dirpath=None,
+        filename='pytorch_cpu_gpu_memory_report',
+        group_by_input_shapes=True,
+        emit_nvtx=False,
+        export_to_chrome=False,
+        record_module_names=True,
+        row_limit=-1,
+        record_shapes=True,
+        profile_memory=True,
+    )

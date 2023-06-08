@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Union
-import torch
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import RunningStage
@@ -18,6 +17,7 @@ from transformers_framework.pipelines.pipeline.mixins.properties import Properti
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 from transformers_framework.utilities.datamodules import TrainerStage_to_Names
 from transformers_framework.utilities.logging import parse_log_arguments
+from transformers_framework.utilities.torch import clean_device_cache
 
 
 DEFAULT_LOG_KWARGS = {
@@ -99,19 +99,17 @@ class Pipeline(LightningModule, OptimizersMixin, MetricsMixin, PropertiesMixin, 
 
     def on_train_epoch_start(self):
         r""" Reset training metrics. """
+        clean_device_cache()
         MetricsMixin.on_train_epoch_start(self)
 
     def on_validation_epoch_start(self):
         r""" Reset validation metrics. """
+        clean_device_cache()
         MetricsMixin.on_validation_epoch_start(self)
-
-    def on_validation_epoch_end(self):
-        r""" May avoid some memory errors. """
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
 
     def on_test_epoch_start(self):
         r""" Reset test metrics. """
+        clean_device_cache()
         MetricsMixin.on_test_epoch_start(self)
 
     def configure_optimizers(self):

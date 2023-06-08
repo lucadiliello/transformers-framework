@@ -1,7 +1,11 @@
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from typing import Any, Dict, Iterable, List, Union
 
-from transformers_framework.utilities.initilization import initialize_precision, initialize_strategy
+from transformers_framework.utilities.initilization import (
+    initialize_precision,
+    initialize_profiler,
+    initialize_strategy,
+)
 from transformers_framework.utilities.logging import rank_zero_warn
 
 
@@ -507,6 +511,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
     # strategies and precision setup
     strategy = initialize_strategy(hyperparameters)
     precision = initialize_precision(hyperparameters)
+    profiler = initialize_profiler(hyperparameters)
 
     res = dict(
         accelerator=hyperparameters.accelerator,
@@ -532,7 +537,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
         gradient_clip_algorithm=hyperparameters.gradient_clip_algorithm,
         deterministic=hyperparameters.deterministic,
         benchmark=hyperparameters.benchmark,
-        profiler=hyperparameters.profiler,
+        profiler=profiler,
         reload_dataloaders_every_n_epochs=hyperparameters.reload_dataloaders_every_n_epochs,
         enable_progress_bar=True,
         enable_model_summary=True,
