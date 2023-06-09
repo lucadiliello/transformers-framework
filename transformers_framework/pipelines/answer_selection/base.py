@@ -3,6 +3,7 @@ from typing import Any, Dict, Union
 
 from datasets import Dataset
 from torchmetrics.classification.accuracy import BinaryAccuracy
+from torchmetrics.classification.f_beta import BinaryF1Score
 from torchmetrics.retrieval import (
     RetrievalHitRate,
     RetrievalMAP,
@@ -22,6 +23,7 @@ from transformers_framework.interfaces.logging import (
     ANSWER_SELECTION_P_1,
     LOSS,
     SEQ_CLASS_ACCURACY,
+    SEQ_CLASS_F1,
     SEQ_CLASS_LOSS,
 )
 from transformers_framework.interfaces.step import AnswerSelectionStepOutput
@@ -49,6 +51,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
         # train metrics
         self.train_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
+        self.train_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
 
         # validation metrics
         metrics_kwargs = dict(
@@ -57,6 +60,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
             ignore_index=IGNORE_IDX,
         )
         self.valid_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
+        self.valid_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.valid_map = RetrievalMAP(**metrics_kwargs)
         self.valid_mrr = RetrievalMRR(**metrics_kwargs)
         self.valid_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
@@ -65,6 +69,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
         # test metrics
         self.test_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
+        self.test_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.test_map = RetrievalMAP(**metrics_kwargs)
         self.test_mrr = RetrievalMRR(**metrics_kwargs)
         self.test_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
@@ -126,10 +131,12 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
         # logs metrics for each training_step, and the average across the epoch, to the progress bar and logger
         train_acc = self.train_acc(step_output.seq_class_predictions, step_output.seq_class_labels)
+        train_f1 = self.train_f1(step_output.seq_class_predictions, step_output.seq_class_labels)
 
         self.log(LOSS, step_output.loss)
         self.log(SEQ_CLASS_LOSS, step_output.seq_class_loss)
         self.log(SEQ_CLASS_ACCURACY, train_acc)
+        self.log(SEQ_CLASS_F1, train_f1)
 
         return step_output.loss
 
@@ -144,10 +151,12 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
         # logging
         val_acc = self.valid_acc(step_output.seq_class_predictions, step_output.seq_class_labels)
+        val_f1 = self.valid_f1(step_output.seq_class_predictions, step_output.seq_class_labels)
 
         self.log(LOSS, step_output.loss)
         self.log(SEQ_CLASS_LOSS, step_output.seq_class_loss)
         self.log(SEQ_CLASS_ACCURACY, val_acc)
+        self.log(SEQ_CLASS_F1, val_f1)
 
     def validation_step_update_metrics(self, step_output: AnswerSelectionStepOutput):
         r""" Update metrics for answer selection. """
@@ -171,10 +180,12 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
         # logging
         test_acc = self.test_acc(step_output.seq_class_predictions, step_output.seq_class_labels)
+        test_f1 = self.test_f1(step_output.seq_class_predictions, step_output.seq_class_labels)
 
         self.log(LOSS, step_output.loss)
         self.log(SEQ_CLASS_LOSS, step_output.seq_class_loss)
         self.log(SEQ_CLASS_ACCURACY, test_acc)
+        self.log(SEQ_CLASS_F1, test_f1)
 
     def test_step_update_metrics(self, step_output: AnswerSelectionStepOutput):
         r""" Update metrics for answer selection. """

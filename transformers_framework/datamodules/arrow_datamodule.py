@@ -83,6 +83,7 @@ class ArrowDataModule(LightningDataModule):
         # automatically set num workers as the number of CPUs divided by the number of GPUs
         if self.hyperparameters.num_workers is None:
             self.hyperparameters.num_workers = cpu_count() // self.hyperparameters.devices
+            rank_zero_warn(f"Automatically set `num_workers` equal to {self.hyperparameters.num_workers}")
 
         # prepare data on local_rank 0 of each node or only on global zero (distributed file system)
         if not self.hyperparameters.prepare_data_per_node and self.trainer.num_nodes > 1:
