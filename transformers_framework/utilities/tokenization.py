@@ -66,21 +66,20 @@ def advanced_tokenization(
         return_overflowing_tokens=return_overflowing_tokens,
         return_offsets_mapping=return_offsets_mapping,
         return_tensors='np',
-        is_split_into_words=is_split_into_words,
     )
-
-    # make sure not to unpack every token
-    if is_split_into_words:
-        data = [data]
 
     if len(data) > 2 or separated:
         if not isinstance(tokenizer, ExtendedTokenizerFast):
             raise ValueError("Cannot encode more than 2 sequences without an ExtendedTokenizer")
-
+        assert is_split_into_words is False
         encoded = (tokenizer.encode_many_separated if separated else tokenizer.encode_many)(
             data, **tok_args, extended_token_type_ids=extended_token_type_ids
         )
     else:
+        # make sure not to unpack every token
+        tok_args['is_split_into_words'] = is_split_into_words
+        if is_split_into_words:
+            data = [data]
         encoded = tokenizer(*data, **tok_args)
 
     if return_word_ids:

@@ -75,6 +75,10 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
                 The sequences to be encoded together. This should be a list of strings or a list of integers
                 (tokenized string ids using the ``convert_tokens_to_ids`` method).
         """
+
+        if 'is_split_into_words' in kwargs:
+            raise ValueError("`is_split_into_words` cannot be passed to extended tokenization algorithms")
+
         assert pad_to_multiple_of is None
         assert max_length is not None
         assert return_overflowing_tokens is False
@@ -217,6 +221,9 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
                 (tokenized string ids using the ``convert_tokens_to_ids`` method).
         """
 
+        if 'is_split_into_words' in kwargs:
+            raise ValueError("`is_split_into_words` cannot be passed to extended tokenization algorithms")
+
         # Backward compatibility for 'truncation_strategy', 'pad_to_max_length'
         padding_strategy, truncation_strategy, max_length, kwargs = self._get_padding_truncation_strategies(
             padding=padding,
@@ -249,7 +256,6 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
             stride=stride,
             pad_to_multiple_of=pad_to_multiple_of,
             return_tensors=return_tensors,
-            prepend_batch_axis=True,
             return_attention_mask=return_attention_mask,
             return_token_type_ids=return_token_type_ids,
             return_overflowing_tokens=return_overflowing_tokens,
@@ -257,8 +263,8 @@ class ExtendedTokenizerFast(PreTrainedTokenizerFast, ABC):
             return_offsets_mapping=return_offsets_mapping,
             return_length=return_length,
             verbose=verbose,
+            prepend_batch_axis=True,
             extended_token_type_ids=extended_token_type_ids,
-            **kwargs,
         )
 
         return self.prepare_for_model_many(**kwargs)

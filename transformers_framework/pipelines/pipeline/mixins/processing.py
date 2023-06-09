@@ -36,7 +36,7 @@ class ProcessingMixin:
         batch = [self.postprocess(sample) for sample in batch]
         batch = collate_flexible_numpy_fn(batch)
 
-        if self.MODEL_INPUT_NAMES_TO_REDUCE is not None:
+        if self.MODEL_INPUT_NAMES_TO_REDUCE:
             for group in self.MODEL_INPUT_NAMES_TO_REDUCE:
                 if group[0] not in batch or batch[group[0]] is None:
                     raise ValueError(

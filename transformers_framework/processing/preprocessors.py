@@ -1,7 +1,7 @@
 from multiprocessing import cpu_count
 from typing import Any, Dict, List, Literal
 
-from datasets import Dataset
+from datasets import Dataset, Sequence
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from transformers_framework.utilities import IGNORE_IDX
@@ -162,6 +162,10 @@ def answer_selection_grouping(
     # '*' or '+' may be used for expansion later in postprocessing
     if answer_column.startswith('*') or answer_column.startswith('+'):
         answer_column = answer_column[1:]
+
+    assert isinstance(dataset.features[answer_column], Sequence), (
+        "When using Jointwise models, the answer column must be a sequence of answer candidates"
+    )
 
     fn_kwargs = dict(
         question_column=question_column,
