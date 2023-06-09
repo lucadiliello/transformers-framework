@@ -181,6 +181,19 @@ def is_already_defined_in_argparse(parser: ArgumentParser, name: str) -> bool:
     return False
 
 
+def parse_additional_kargs(data: List[str]) -> Dict[str, str]:
+    r""" Parse additional arguments passed to the argparser with format key=value. """
+    for d in data:
+        assert "=" in d
+    
+    data = [d.split("=") for d in data]
+
+    for d in data:
+        assert d[0] and d[1]
+
+    return dict(data)
+
+
 def extract_text_fields_with_multiple_formats(sample: Dict[str, str], fields: List[str]) -> List[str]:
     r""" Extract data from fields with different formats.
     

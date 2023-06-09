@@ -8,7 +8,7 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizerBase
 
-from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.arguments import FlexibleArgumentParser, parse_additional_kargs
 from transformers_framework.utilities.functional import add_dict_to_attributes
 from transformers_framework.utilities.logging import rank_zero_warn
 from transformers_framework.utilities.models import load_config, load_model, load_tokenizer, set_decoder_start_token_id
@@ -31,7 +31,8 @@ class ModelsMixin:
         self.fix_pre_trained_paths()
 
         # setup all configurations
-        configs = self.configure_config()
+        additiona_configuration_key_values = parse_additional_kargs(self.hyperparameters.additional_config_kwargs)
+        configs = self.configure_config(**additiona_configuration_key_values)
 
         if not isinstance(configs, Dict):
             configs = {'config': configs}
@@ -125,18 +126,22 @@ class ModelsMixin:
 
     def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         r""" Load or create the configuration and return it. """
-        return self.load_config(self.CONFIG_CLASS, self.hyperparameters.pre_trained_config, **kwargs)
+        return self.load_config(self.CONFIG_CLASS, name_or_path=self.hyperparameters.pre_trained_config, **kwargs)
 
     def configure_model(self, config: PretrainedConfig, **kwargs) -> Union[PreTrainedModel, Dict[str, PreTrainedModel]]:
         r"""
         Load model from scratch or from disk and return it. To load more than one model, for example in ELECTRA, you
         may return a dict of models.
         """
-        return self.load_model(self.MODEL_CLASS, self.hyperparameters.pre_trained_model, config=config, **kwargs)
+        return self.load_model(
+            self.MODEL_CLASS, name_or_path=self.hyperparameters.pre_trained_model, config=config, **kwargs
+        )
 
     def configure_tokenizer(self, **kwargs) -> PreTrainedTokenizerBase:
         r""" Load the tokenizer from disk and return it. """
-        return self.load_tokenizer(self.TOKENIZER_CLASS, self.hyperparameters.pre_trained_tokenizer, **kwargs)
+        return self.load_tokenizer(
+            self.TOKENIZER_CLASS, name_or_path=self.hyperparameters.pre_trained_tokenizer, **kwargs
+        )
 
     @classmethod
     def add_argparse_args(cls, parser: FlexibleArgumentParser):
@@ -144,6 +149,14 @@ class ModelsMixin:
         parser.add_argument('--pre_trained_model', type=str, required=False, default=None)
         parser.add_argument('--pre_trained_tokenizer', type=str, required=False, default=None)
         parser.add_argument('--pre_trained_config', type=str, required=False, default=None)
+        parser.add_argument(
+            '--additional_config_kwargs',
+            type=str,
+            nargs='+',
+            required=False,
+            default=[],
+            help="Additional key-values for the main config, to be passed as KEY=VALUE",
+        )
         parser.add_argument('--compile', action="store_true", help="Compiles model graph for speedup")
         parser.add_argument(
             '--temporary_models_folder',
