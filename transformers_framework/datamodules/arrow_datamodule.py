@@ -189,7 +189,10 @@ class ArrowDataModule(LightningDataModule):
 
         # load from anywhere and log info
         dataset, location = load_dataset_from_anywhere(
-            dataset_path, config=config, keep_in_memory=self.hyperparameters.keep_in_memory
+            dataset_path,
+            config=config,
+            keep_in_memory=self.hyperparameters.keep_in_memory,
+            shard=self.hyperparameters[f'{TrainerFn_to_Names[stage]}_shard_dataset'],
         )
         rank_zero_info(f"Loaded {stage.value.capitalize()} dataset from {location}. Length: {len(dataset)}")
 
@@ -311,6 +314,13 @@ class ArrowDataModule(LightningDataModule):
                 required=False,
                 default=None,
                 help=f"Path to {stage_name} dataset config",
+            )
+            parser.add_argument(
+                f'--{stage_name}_shard_dataset',
+                type=int,
+                required=False,
+                default=None,
+                help=f"Reduce {stage_name} dataset that number of times",
             )
             parser.add_argument(
                 f'--reload_{stage_name}_dataset_every_epoch',
