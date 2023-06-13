@@ -421,6 +421,8 @@ def summarization_processor(
     additional_summaries_column: str = None,
 ):
     r""" Tokenize text string and prepare for Summarization. """
+    assert len(max_sequence_length) == 2
+
     # encoder
     res_document = advanced_tokenization(
         prefix + sample[document_column],
