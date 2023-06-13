@@ -82,7 +82,7 @@ def load_dataset_from_anywhere(
         rank_zero_warn("You loaded a dataset from S3 or from disk and used config parameters, which is not required.")
 
     if shard is not None and shard > 1:
-        dataset = dataset.shard(shard, 0, writer_batch_size=100000)
+        dataset = dataset.shard(shard, 0, writer_batch_size=100000, contiguous=False)
     
     return dataset, location
 

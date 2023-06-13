@@ -200,15 +200,18 @@ class ArrowDataModule(LightningDataModule):
         dataset = (IterableDataset if self.hyperparameters.iterable else MapDataset)(dataset)
         return dataset
 
-    def default_dataloader(self, dataset: Dataset, shuffle: bool = False):
+    def default_dataloader(self, dataset: Dataset, shuffle: bool = False, batch_size: int = None):
         r""" Return a dataloader with all usual default parameters. """
 
         if self.hyperparameters.iterable and shuffle:
             raise ValueError("Found shuffle=True while using IterableDataset")
 
+        if batch_size is None:
+            batch_size = self.hyperparameters.batch_size
+
         return DataLoader(
             dataset,
-            batch_size=self.hyperparameters.batch_size,
+            batch_size=batch_size,
             num_workers=self.hyperparameters.num_workers,
             pin_memory=True,
             collate_fn=self.model.collate_fn,
@@ -232,7 +235,9 @@ class ArrowDataModule(LightningDataModule):
             return None
         self.preprocessing(TrainerFn.VALIDATING)
         self.valid_dataset = self.load_dataset(TrainerFn.VALIDATING)
-        return self.default_dataloader(self.valid_dataset, shuffle=False)
+        return self.default_dataloader(
+            self.valid_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
+        )
 
     def test_dataloader(self):
         r""" Return the test dataloader. """
@@ -240,7 +245,9 @@ class ArrowDataModule(LightningDataModule):
             return None
         self.preprocessing(TrainerFn.TESTING)
         self.test_dataset = self.load_dataset(TrainerFn.TESTING)
-        return self.default_dataloader(self.test_dataset, shuffle=False)
+        return self.default_dataloader(
+            self.test_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
+        )
 
     def predict_dataloader(self):
         r""" Return the predict dataloader. """
@@ -248,7 +255,9 @@ class ArrowDataModule(LightningDataModule):
             return None
         self.preprocessing(TrainerFn.PREDICTING)
         self.predict_dataset = self.load_dataset(TrainerFn.PREDICTING)
-        return self.default_dataloader(self.predict_dataset, shuffle=False)
+        return self.default_dataloader(
+            self.predict_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
+        )
 
     def transfer_batch_to_device(self, batch, device: torch.device, dataloader_idx: int):
         r""" Transfer batch to device. """
@@ -265,6 +274,9 @@ class ArrowDataModule(LightningDataModule):
         # dataloaders stuff
         parser.add_argument('--num_workers', type=int, required=False, default=None, help='Number of workers')
         parser.add_argument('--batch_size', type=int, required=True, help="Train/valid/test batch size")
+        parser.add_argument(
+            '--eval_batch_size', type=int, required=False, default=None, help="valid/test batch size if different"
+        )
 
         parser.add_argument('--iterable', action="store_true")
 
