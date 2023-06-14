@@ -6,6 +6,7 @@ from transformers_framework.architectures.roberta.configuration_roberta import R
 from transformers_framework.architectures.roberta.modeling_extended_roberta import (
     RobertaForExtendedSequenceClassification,
 )
+from transformers_framework.architectures.roberta.modeling_roberta import RobertaForWeightedSequenceClassification
 from transformers_framework.architectures.roberta.tokenization_roberta import RobertaExtendedTokenizerFast
 from transformers_framework.pipelines.answer_selection.base import AnswerSelectionPipeline
 
@@ -18,3 +19,8 @@ class RobertaAnswerSelectionPipeline(AnswerSelectionPipeline):
     MODEL_EXTENDED_CLASS = RobertaForExtendedSequenceClassification
     TOKENIZER_CLASS = RobertaTokenizerFast
     TOKENIZER_EXTENDED_CLASS = RobertaExtendedTokenizerFast
+
+
+class WeightedRobertaAnswerSelectionPipeline(RobertaAnswerSelectionPipeline):
+
+    MODEL_CLASS = RobertaForWeightedSequenceClassification
