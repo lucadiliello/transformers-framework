@@ -7,6 +7,7 @@ import torch
 import torch.distributed as dist
 from pytorch_lightning.trainer import Trainer
 from torch import nn
+from tqdm import tqdm
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.models.deberta_v2.configuration_deberta_v2 import DebertaV2Config
@@ -178,6 +179,23 @@ def get_deberta_reduced_generator_config(discriminator_config: DebertaV2Config, 
     return DebertaV2Config(**params)
 
 
+class DownloadProgress(object):
+
+    def __init__(self, total: int = None, name: str = None):
+        super().__init__()
+        name = "Downloading" if name is None else f"Downloading {os.path.split(name)[-1]}"
+        self.progress = tqdm(desc=name, total=total, unit="B", unit_scale=True)
+
+    def __enter__(self):
+        return self.callback
+
+    def callback(self, chunk):
+        self.progress.update(chunk)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.progress.close()
+
+
 def download_s3_folder(s3_path: str, local_dir: str):
     r"""
     Download the contents of a folder recursively into a directory
@@ -195,8 +213,9 @@ def download_s3_folder(s3_path: str, local_dir: str):
     s3_folder = os.path.join(*path_parts)
 
     # assumes credentials & configuration are handled outside python in .aws directory or environment variables
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
+    s3_resource = boto3.resource('s3')
+    s3_client = boto3.client('s3')
+    bucket = s3_resource.Bucket(bucket_name)
 
     for obj in bucket.objects.filter(Prefix=s3_folder):
         target = os.path.join(local_dir, os.path.relpath(obj.key, s3_folder))
@@ -206,8 +225,14 @@ def download_s3_folder(s3_path: str, local_dir: str):
         if obj.key[-1] == '/':
             continue
 
-        rank_zero_info(f"Downloading file {obj.key} from s3...")
-        bucket.download_file(obj.key, target)
+        # getting metadata for progress bar
+        meta_data = s3_client.head_object(Bucket=bucket.name, Key=obj.key)
+        total_length = int(meta_data.get('ContentLength', 0))
+
+        with DownloadProgress(total=total_length, name=obj.key) as callback:
+            bucket.download_file(obj.key, target, Callback=callback)
+
+    rank_zero_info("Syncronization from s3 completed successfully")
 
 
 def download_model_from_s3(
