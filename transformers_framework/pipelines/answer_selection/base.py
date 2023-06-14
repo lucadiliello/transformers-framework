@@ -1,6 +1,7 @@
 from types import MethodType
 from typing import Any, Dict, Union
 
+import torch
 from datasets import Dataset
 from torchmetrics.classification.accuracy import BinaryAccuracy
 from torchmetrics.classification.f_beta import BinaryF1Score
@@ -49,6 +50,11 @@ class AnswerSelectionPipeline(ExtendedPipeline):
             if self.hyperparameters.grouping == 'random' and not self.hyperparameters.reload_train_dataset_every_epoch:
                 raise ValueError("You must specify `reload_dataloaders_every_n_epochs=1` when using `grouping=random`")
 
+        self.label_weights = None
+        if self.hyperparameters.label_weights is not None:
+            assert len(self.hyperparameters.label_weights) == 2
+            self.label_weights = torch.tensor(self.hyperparameters.label_weights)
+
         # train metrics
         self.train_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
         self.train_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
@@ -96,6 +102,9 @@ class AnswerSelectionPipeline(ExtendedPipeline):
 
     def step(self, batch: Dict) -> AnswerSelectionStepOutput:
         r""" Forward step is shared between all train/val/test steps. """
+
+        if self.label_weights is not None:
+            batch['weights'] = self.label_weights.to(device=self.device)
 
         index = batch.pop('index')
         results: SeqClassOutput = self.forward(**batch)
@@ -242,6 +251,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         parser.add_argument('--input_columns', type=str, nargs='+', required=True)
         parser.add_argument('--label_column', type=str, required=True)
         parser.add_argument('--index_column', type=str, required=False)
+        parser.add_argument('--label_weights', type=float, nargs=2, required=False, default=None)
         add_answer_selection_arguments(parser)
         parser.add_argument('--separated', action="store_true")
         parser.add_argument_if_not('k', None, '--grouping', type=str, required=True, choices=('fixed', 'random'))
