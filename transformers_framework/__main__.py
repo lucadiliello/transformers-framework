@@ -3,6 +3,7 @@ import os
 import datasets
 import pytorch_lightning as pl
 import torch
+import torch._dynamo
 import torchmetrics
 import transformers
 from pytorch_lightning import seed_everything
@@ -27,7 +28,7 @@ from transformers_framework.utilities.arguments import (
     get_trainer_args_from_hyperparameters,
 )
 from transformers_framework.utilities.classes import ExtendedNamespace
-from transformers_framework.utilities.logging import rank_zero_info
+from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
 
 
 # too much complains of the tokenizers
@@ -42,6 +43,9 @@ TENSORBOARD_DIR = 'tensorboard'
 CHECKPOINTS_DIR = 'checkpoints'
 PRE_TRAINED_DIR = "pre_trained_models"
 PREDICTIONS_DIR = "predictions"
+
+# set verbose mode with Dynamo for better error traces when compiling
+torch._dynamo.config.verbose = True
 
 
 def main(hyperparameters: ExtendedNamespace):
@@ -66,6 +70,11 @@ def main(hyperparameters: ExtendedNamespace):
     tensorboard_path = os.path.join(hyperparameters.output_dir, TENSORBOARD_DIR)
     pre_trained_path = os.path.join(hyperparameters.output_dir, PRE_TRAINED_DIR, hyperparameters.name)
     predictions_path = os.path.join(hyperparameters.output_dir, PREDICTIONS_DIR, hyperparameters.name)
+
+    # enable fallback to eager execution to avoid errors
+    if hyperparameters.dynamo_fallback_eager:
+        rank_zero_warn("Suppressing Dynamo errors in torch to avoid hang training.")
+        torch._dynamo.config.suppress_errors = True
 
     # set the random seed
     seed_everything(seed=hyperparameters.seed, workers=True)
@@ -215,6 +224,9 @@ if __name__ == '__main__':
 
     # SWA
     parser.add_argument('--stochastic_weight_averaging', action="store_true", help="Activate SWA")
+
+    # Dynamo suppress errors
+    parser.add_argument('--dynamo_fallback_eager', action="store_true", help="Suppress dynamo errors")
 
     # add all the important trainer options to argparse
     # ie: now --devices --num_nodes ... --fast_dev_run all work in the cli

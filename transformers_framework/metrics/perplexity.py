@@ -26,7 +26,7 @@ class Perplexity(_Perplexity):
     """
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        """Compute and store intermediate statistics for Perplexity.
+        r""" Compute and store intermediate statistics for Perplexity.
 
         Args:
             preds:

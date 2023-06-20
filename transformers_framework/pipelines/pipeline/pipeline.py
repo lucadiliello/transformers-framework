@@ -44,6 +44,9 @@ class Pipeline(LightningModule, OptimizersMixin, MetricsMixin, PropertiesMixin, 
         if len(self.hyperparameters.max_sequence_length) == 1:
             self.hyperparameters.max_sequence_length = self.hyperparameters.max_sequence_length[0]
 
+    def configure_sharded_model(self):
+        return ModelsMixin.configure_sharded_model(self)
+
     def forward(self, *args, model: str = 'model', **kwargs):
         r""" Simply call the `model` attribute with the given args and kwargs. """
         assert not args, "positional arguments are deprecated, use only keyword arguments. "  # nosec

@@ -40,6 +40,17 @@ class ModelsMixin:
         assert 'config' in configs, "Need to instantiate at least a config with key 'config'"  # nosec
         add_dict_to_attributes(self, configs)
 
+        # this simplifies our life with decoder models because every model defines start decoding token id differently
+        if self.config.is_encoder_decoder or self.config.is_decoder:
+            set_decoder_start_token_id(self.model, self.tokenizer)
+
+        if not self.hyperparameters.configure_sharded_model:
+            self.setup_models()
+
+        # setup all configurations
+        self.tokenizer = self.configure_tokenizer()
+
+    def setup_models(self):
         # setup all models
         models = self.configure_model(self.config)
 
@@ -48,19 +59,14 @@ class ModelsMixin:
 
         # torch compile new functionality
         if self.hyperparameters.compile:
-            rank_zero_warn("Suppressing Dynamo errors in torch to avoid hang training.")
-            # torch._dynamo.config.suppress_errors = True
             models = {k: torch.compile(model) for k, model in models.items()}
 
         assert 'model' in models, "Need to instantiate at least a model with key 'model'"  # nosec
         add_dict_to_attributes(self, models)
 
-        # setup all configurations
-        self.tokenizer = self.configure_tokenizer()
-
-        # this simplifies our life with decoder models because every model defines start decoding token id differently
-        if self.config.is_encoder_decoder or self.config.is_decoder:
-            set_decoder_start_token_id(self.model, self.tokenizer)
+    def configure_sharded_model(self):
+        if self.hyperparameters.configure_sharded_model:
+            self.setup_models()
 
     def fix_pre_trained_paths(self):
         r""" Checking and fixing pretrained paths. """
@@ -164,3 +170,4 @@ class ModelsMixin:
             required=False,
             default="/science/lucadiliello/.cache/transformers_framework/models",
         )
+        parser.add_argument('--configure_sharded_model', action="store_true")

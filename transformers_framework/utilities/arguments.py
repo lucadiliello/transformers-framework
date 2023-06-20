@@ -514,6 +514,7 @@ def add_trainer_args(parser: ArgumentParser):
     parser.add_argument('--gradient_clip_algorithm', type=str, default=None, required=False)
     parser.add_argument('--deterministic', action="store_true")
     parser.add_argument('--benchmark', action="store_true")
+    parser.add_argument('--barebones', action="store_true")
     parser.add_argument('--profiler', type=str, default=None, required=False)
     parser.add_argument('--reload_dataloaders_every_n_epochs', type=int, default=0, required=False)
 
@@ -550,6 +551,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
         gradient_clip_algorithm=hyperparameters.gradient_clip_algorithm,
         deterministic=hyperparameters.deterministic,
         benchmark=hyperparameters.benchmark,
+        barebones=hyperparameters.barebones,
         profiler=profiler,
         reload_dataloaders_every_n_epochs=hyperparameters.reload_dataloaders_every_n_epochs,
         enable_progress_bar=True,
