@@ -213,7 +213,7 @@ class ArrowDataModule(LightningDataModule):
             dataset,
             batch_size=batch_size,
             num_workers=self.hyperparameters.num_workers,
-            pin_memory=True,
+            pin_memory=not self.hyperparameters.disable_memory_pinning,
             collate_fn=self.model.collate_fn,
             shuffle=shuffle,
             multiprocessing_context=(
@@ -273,6 +273,9 @@ class ArrowDataModule(LightningDataModule):
     def add_argparse_args(cls, parser: FlexibleArgumentParser):
         # dataloaders stuff
         parser.add_argument('--num_workers', type=int, required=False, default=None, help='Number of workers')
+        parser.add_argument(
+            '--disable_memory_pinning', action="store_true", help="Disable memory pinning in dataloader"
+        )
         parser.add_argument('--batch_size', type=int, required=True, help="Train/valid/test batch size")
         parser.add_argument(
             '--eval_batch_size', type=int, required=False, default=None, help="valid/test batch size if different"

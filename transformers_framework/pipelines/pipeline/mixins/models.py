@@ -40,15 +40,16 @@ class ModelsMixin:
         assert 'config' in configs, "Need to instantiate at least a config with key 'config'"  # nosec
         add_dict_to_attributes(self, configs)
 
-        # this simplifies our life with decoder models because every model defines start decoding token id differently
-        if self.config.is_encoder_decoder or self.config.is_decoder:
-            set_decoder_start_token_id(self.model, self.tokenizer)
-
+        # instantiate model
         if not self.hyperparameters.configure_sharded_model:
             self.setup_models()
 
         # setup all configurations
         self.tokenizer = self.configure_tokenizer()
+
+        # this simplifies our life with decoder models because every model defines start decoding token id differently
+        if self.config.is_encoder_decoder or self.config.is_decoder:
+            set_decoder_start_token_id(self.model, self.tokenizer)
 
     def setup_models(self):
         # setup all models
