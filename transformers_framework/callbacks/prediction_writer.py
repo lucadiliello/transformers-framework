@@ -2,11 +2,11 @@ import os
 from argparse import Namespace
 from typing import Any, List
 
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 from datasets import Dataset
 from lightning_fabric.utilities.rank_zero import rank_zero_only
-from pytorch_lightning.callbacks.prediction_writer import BasePredictionWriter
+from lightning.pytorch.callbacks.prediction_writer import BasePredictionWriter
 
 from transformers_framework.utilities.distributed import sync_data_distributed
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn

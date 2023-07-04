@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Union
 
-from pytorch_lightning import LightningModule
-from pytorch_lightning.trainer.states import RunningStage
+from lightning.pytorch import LightningModule
+from lightning.pytorch.trainer.states import RunningStage
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase

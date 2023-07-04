@@ -1,4 +1,4 @@
-from pytorch_lightning.trainer.states import RunningStage, TrainerFn
+from lightning.pytorch.trainer.states import RunningStage, TrainerFn
 
 
 TrainerFn_to_Names = {

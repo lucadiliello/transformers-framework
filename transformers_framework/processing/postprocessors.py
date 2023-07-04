@@ -496,17 +496,21 @@ def token_class_processor(
 
 def random_token_detection_processor(
     sample: Dict[str, Any],
-    input_columns: str,
+    input_columns: List[str],
     probability: float,
     tokenizer: PreTrainedTokenizerBase,
     max_sequence_length: int,
     whole_word_detection: bool,
 ):
     r""" Tokenize text string and prepare for RTD. """
-    data = [sample[input_column] for input_column in input_columns if sample[input_column]]
+
+    assert 1 <= len(input_columns) <= 2, f"Allowed 1 or 2 inputs in `masked_lm_processor`, got {len(input_columns)}"
+
+    text = [sample[input_column] for input_column in input_columns if sample[input_column] is not None]
+    assert text
 
     data = advanced_tokenization(
-        *data,
+        *text,
         tokenizer=tokenizer,
         max_sequence_length=max_sequence_length,
         return_word_ids=True,

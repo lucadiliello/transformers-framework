@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 import boto3
 import torch
 import torch.distributed as dist
-from pytorch_lightning.trainer import Trainer
+from lightning.pytorch.trainer import Trainer
 from torch import nn
 from tqdm import tqdm
 from transformers.configuration_utils import PretrainedConfig

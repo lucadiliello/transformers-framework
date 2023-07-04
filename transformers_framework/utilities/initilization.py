@@ -3,10 +3,10 @@ from argparse import Namespace
 from typing import Union
 
 import torch
-from pytorch_lightning.profilers.profiler import Profiler
-from pytorch_lightning.profilers.pytorch import PyTorchProfiler
-from pytorch_lightning.strategies.ddp import DDPStrategy
-from pytorch_lightning.strategies.strategy import Strategy
+from lightning.pytorch.profilers.profiler import Profiler
+from lightning.pytorch.profilers.pytorch import PyTorchProfiler
+from lightning.pytorch.strategies.ddp import DDPStrategy
+from lightning.pytorch.strategies.strategy import Strategy
 
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
@@ -36,7 +36,7 @@ def initialize_strategy(hyperparameters: Namespace) -> Union[Strategy, str]:
 
     elif hyperparameters.strategy == 'deepspeed_stage_2_offload_no_error':
         import deepspeed
-        from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
+        from lightning.pytorch.strategies.deepspeed import DeepSpeedStrategy
 
         from transformers_framework.utilities.deepspeed import get_dynamic_loss_scale_args
 
@@ -60,8 +60,7 @@ def initialize_strategy(hyperparameters: Namespace) -> Union[Strategy, str]:
         )
 
     elif hyperparameters.strategy == 'deepspeed_stage_3_offload':
-        import deepspeed
-        from pytorch_lightning.strategies.deepspeed import DeepSpeedStrategy
+        from lightning.pytorch.strategies.deepspeed import DeepSpeedStrategy
 
         return DeepSpeedStrategy(
             stage=3,

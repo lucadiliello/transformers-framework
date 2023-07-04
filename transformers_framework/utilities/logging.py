@@ -17,7 +17,7 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 
 # create formatter
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(name)s [%(levelname)s]: %(message)s')
 
 # add formatter to ch
 ch.setFormatter(formatter)
@@ -34,12 +34,12 @@ warning_logging = logging.getLogger('py.warnings')
 warning_logging.addHandler(ch)
 
 # manage lightning logging
-pl_logger = logging.getLogger('pytorch_lightning')
+pl_logger = logging.getLogger('lightning.pytorch')
 pl_logger.setLevel(logging.INFO)
 pl_logger.addHandler(ch)
 pl_logger.propagate = False
 
-pl_logger = logging.getLogger('pytorch_lightning.utilities.rank_zero')
+pl_logger = logging.getLogger('lightning.pytorch.utilities.rank_zero')
 pl_logger.setLevel(logging.INFO)
 pl_logger.addHandler(ch)
 pl_logger.propagate = False

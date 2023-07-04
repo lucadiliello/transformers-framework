@@ -1,19 +1,19 @@
 import os
 
 import datasets
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch._dynamo
 import torchmetrics
 import transformers
-from pytorch_lightning import seed_everything
-from pytorch_lightning.callbacks import (
+from lightning.pytorch import seed_everything
+from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
     RichModelSummary,
     StochasticWeightAveraging,
 )
-from pytorch_lightning.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger
 
 from transformers_framework import __version__
 from transformers_framework.callbacks.early_stopping import EarlyStopping

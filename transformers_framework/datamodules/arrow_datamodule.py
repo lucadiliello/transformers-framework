@@ -6,9 +6,9 @@ from multiprocessing import cpu_count
 import numpy as np
 import torch
 import torch.distributed as dist
-from pytorch_lightning import LightningDataModule
-from pytorch_lightning.trainer.states import TrainerFn
-from pytorch_lightning.trainer.trainer import Trainer
+from lightning.pytorch import LightningDataModule
+from lightning.pytorch.trainer.states import TrainerFn
+from lightning.pytorch.trainer.trainer import Trainer
 from torch.utils.data import DataLoader, Dataset
 
 from transformers_framework.datasets.iterable_dataset import IterableDataset

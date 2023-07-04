@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Union, cast
 
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import RichProgressBar as _RichProgressBar
-from pytorch_lightning.callbacks.progress.rich_progress import CustomProgress, MetricsTextColumn, RichProgressBarTheme
+import lightning.pytorch as pl
+from lightning.pytorch.callbacks import RichProgressBar as _RichProgressBar
+from lightning.pytorch.callbacks.progress.rich_progress import CustomProgress, MetricsTextColumn, RichProgressBarTheme
 from rich import get_console, reconfigure
 from rich.progress import Task, TaskID
 from rich.style import Style

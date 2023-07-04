@@ -1,6 +1,6 @@
 from typing import Union
 
-from pytorch_lightning.strategies.strategy import Strategy
+from lightning.pytorch.strategies.strategy import Strategy
 
 
 def check_strategy(strategy: Union[Strategy, str], name: str) -> bool:

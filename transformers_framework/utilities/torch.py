@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import torch
-from pytorch_lightning.utilities.memory import garbage_collection_cuda
+from lightning.pytorch.utilities.memory import garbage_collection_cuda
 from torch import nn
 
 from transformers_framework.utilities import IGNORE_IDX

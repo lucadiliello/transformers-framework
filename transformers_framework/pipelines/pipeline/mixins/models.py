@@ -3,7 +3,7 @@ from typing import Dict, Union
 
 import torch
 from lightning_utilities.core.imports import compare_version
-from pytorch_lightning.trainer import Trainer
+from lightning.pytorch.trainer import Trainer
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizerBase

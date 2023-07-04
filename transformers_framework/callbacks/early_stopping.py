@@ -1,6 +1,6 @@
 from argparse import Namespace
 
-from pytorch_lightning.callbacks import EarlyStopping as _EarlyStopping
+from lightning.pytorch.callbacks import EarlyStopping as _EarlyStopping
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 

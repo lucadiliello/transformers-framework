@@ -3,8 +3,8 @@ import shutil
 from argparse import Namespace
 from typing import Any, Dict, List
 
-from pytorch_lightning import LightningModule, Trainer
-from pytorch_lightning.callbacks.callback import Callback
+from lightning.pytorch import LightningModule, Trainer
+from lightning.pytorch.callbacks.callback import Callback
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 from transformers_framework.utilities.inspectors import is_simple_object
