@@ -2,6 +2,8 @@ from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
+import scipy
+import torch
 
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.functional import pad_array, shift_tokens_right
@@ -9,6 +11,7 @@ from transformers_framework.utilities.numpy import (
     compress_spans_to_unique_tokens,
     correct_mask_to_cover_words,
     get_generator,
+    numpy_multinomial,
     random_spans_mask,
 )
 from transformers_framework.utilities.processors import (
@@ -130,9 +133,7 @@ def random_token_substitution(
         probability_matrix[word_tails == 1] = 0.0
 
     special_tokens_mask = (word_ids == IGNORE_IDX)
-
     probability_matrix[special_tokens_mask] = 0.0
-    replaced_labels[special_tokens_mask] = 0
 
     substituted_indices = get_generator().binomial(n=1, p=probability_matrix).astype(dtype=np.bool_)
 
@@ -143,6 +144,83 @@ def random_token_substitution(
     # replace tokens
     new_tokens = get_generator().choice(vocab_size, size=len(replaced_input_ids))
     replaced_input_ids[substituted_indices] = new_tokens[substituted_indices]
+    replaced_labels[substituted_indices] = 1
+
+    return replaced_input_ids, replaced_labels
+
+
+def clusters_random_token_substitution(
+    input_ids: npt.NDArray[np.int64],
+    word_ids: npt.NDArray[np.int64],
+    probability: float = 0.15,
+    whole_word_detection: bool = False,
+    disable: bool = False,
+    token_to_cluster_map: torch.Tensor = None,
+    counts: torch.Tensor = None,
+    beta: float = None,
+) -> Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
+
+    if disable:
+        return input_ids, None
+
+    # make a copy to avoid modifying the originals
+    replaced_input_ids = input_ids.copy()
+    replaced_labels = np.full(input_ids.shape, fill_value=0, dtype=int)
+
+    # We sample a few tokens in each sequence for TD training
+    # (with probability probability defaults to 0.15 in ELECTRA)
+    probability_matrix = np.full(replaced_input_ids.shape, fill_value=probability, dtype=np.float32)
+
+    # create whole work masking mask -> True if the token starts with ## (following token in composed words)
+    if whole_word_detection:
+        word_tails = whole_word_tails_mask(word_ids)
+        # with whole word masking probability matrix should average probability over the entire word
+        probability_matrix[word_tails == 1] = 0.0
+
+    special_tokens_mask = (word_ids == IGNORE_IDX)
+    probability_matrix[special_tokens_mask] = 0.0
+
+    substituted_indices = get_generator().binomial(n=1, p=probability_matrix).astype(dtype=np.bool_)
+
+    # tokens_to_swap has shape (number_of_substituted_tokens,)
+    tokens_to_swap = replaced_input_ids[substituted_indices]
+
+    # tokens_clusters has shape (number_of_substituted_tokens,) and contains the id of the corresponding cluster
+    source_clusters = token_to_cluster_map[tokens_to_swap]
+
+    # source_clusters has shape (number_of_substituted_tokens, n_clusters)
+    target_clusters_counts = counts[source_clusters]
+
+    # target_clusters_counts has shape (number_of_substituted_tokens, n_clusters)
+    minimum = target_clusters_counts.min(axis=-1, keepdims=True)
+    maximum = target_clusters_counts.max(axis=-1, keepdims=True)
+
+    # normalize distribution over target clusters
+    denominator = (maximum - minimum)
+    denominator[denominator == 0] = 1
+
+    target_clusters_counts_norm = (target_clusters_counts - minimum) / denominator
+    target_clusters_probs = scipy.special.softmax(target_clusters_counts_norm * beta, axis=-1)
+
+    # sample target clusters based on probabilities, shape (number_of_substituted_tokens,)
+    sample_target_clusters = numpy_multinomial(target_clusters_probs, generator=get_generator()).ravel()
+
+    # define a uniform probability over the elements in each cluster
+    if not hasattr(clusters_random_token_substitution, 'candidates'):
+        candidates = np.expand_dims(token_to_cluster_map, axis=0) == np.expand_dims(np.arange(counts.shape[0]), axis=-1)
+        candidates = candidates / candidates.sum(-1, keepdims=True)
+        clusters_random_token_substitution.candidates = candidates
+    else:
+        candidates = clusters_random_token_substitution.candidates
+
+    # select target clusters
+    target_clusters = candidates[sample_target_clusters]
+
+    # choose words randomly from new clusters (number_of_substituted_tokens, n_clusters)
+    random_words = numpy_multinomial(target_clusters, generator=get_generator()).ravel()
+
+    # substitute
+    replaced_input_ids[substituted_indices] = random_words
     replaced_labels[substituted_indices] = 1
 
     return replaced_input_ids, replaced_labels

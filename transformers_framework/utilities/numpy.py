@@ -379,3 +379,12 @@ def compress_spans_to_unique_tokens(
     tokens = np.where(first_noise_tokens, sentinels, tokens)
     tokens = tokens[~subsequent_noise_tokens]
     return tokens
+
+
+def numpy_multinomial(probabilities: npt.NDArray, generator: np.random.Generator = None) -> npt.NDArray:
+    r""" Sample `num_samples` elements from a multinomial distribution. """
+    if generator is None:
+        generator = np.random.default_rng()
+
+    positions = generator.multinomial(1, pvals=probabilities)
+    return positions.nonzero()[1]

@@ -1,8 +1,9 @@
 import json
 import os
 from argparse import Namespace
-from typing import Dict, Generator, Iterable, Union
+from typing import Dict, Generator, Iterable, List, Union
 
+import torch
 import yaml
 
 from transformers_framework.utilities.logging import rank_zero_warn
@@ -54,3 +55,8 @@ def strip_lines(iterable: Iterable[str]) -> Generator:
         line = line.strip()
         if line:
             yield line
+
+
+def read_clusters(filename: str) -> torch.IntTensor:
+    with open(filename, "r") as fi:
+        return torch.tensor([int(line) for line in fi.readlines() if line], dtype=torch.int64)

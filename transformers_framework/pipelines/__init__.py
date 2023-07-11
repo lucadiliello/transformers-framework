@@ -1,4 +1,6 @@
 from transformers_framework.pipelines.answer_selection import models as answer_selection_models
+from transformers_framework.pipelines.cluster_random_token_detection import \
+    models as cluster_random_token_detection_models
 from transformers_framework.pipelines.denoising import models as denoising_models
 from transformers_framework.pipelines.masked_lm import models as masked_lm_models
 from transformers_framework.pipelines.masked_lm_and_answer_selection import models as masked_lm_answer_selection_models
@@ -25,6 +27,7 @@ pipelines = dict(
     pos_tagging=token_class_models,
     named_entity_recognition=token_class_models,
     random_token_detection=random_token_detection_models,
+    cluster_random_token_detection=cluster_random_token_detection_models,
     token_detection_and_masked_lm=token_detection_masked_lm_models,
     token_detection_and_masked_lm_and_seq_class=token_detection_masked_lm_seq_class_models,
     question_answering=question_answering_models,

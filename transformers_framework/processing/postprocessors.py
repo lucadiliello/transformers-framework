@@ -1,9 +1,11 @@
 from typing import Any, Dict, List
 
 import numpy as np
+import torch
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from transformers_framework.language.modeling import (
+    clusters_random_token_substitution,
     denoising_bart_version,
     denoising_t5_version,
     masked_language_modeling,
@@ -516,8 +518,10 @@ def random_token_detection_processor(
         return_word_ids=True,
     )
 
+    original_input_ids = data.pop('input_ids')
+
     input_ids, labels = random_token_substitution(
-        input_ids=data.pop('input_ids'),
+        input_ids=original_input_ids,
         word_ids=data.pop('word_ids'),
         vocab_size=tokenizer.vocab_size,
         probability=probability,
@@ -527,5 +531,50 @@ def random_token_detection_processor(
     # encoder
     res = dict(data)
     res['input_ids'] = input_ids
+    res['original_input_ids'] = original_input_ids
+    res['token_detection_labels'] = labels
+    return res
+
+
+def clustered_random_token_detection_processor(
+    sample: Dict[str, Any],
+    input_columns: List[str],
+    probability: float,
+    tokenizer: PreTrainedTokenizerBase,
+    max_sequence_length: int,
+    whole_word_detection: bool,
+    token_to_cluster_map: torch.Tensor,
+    counts: torch.Tensor,
+    beta: float,
+):
+    r""" Tokenize text string and prepare for Cluster-based RTD. """
+    assert 1 <= len(input_columns) <= 2, f"Allowed 1 or 2 inputs in `masked_lm_processor`, got {len(input_columns)}"
+
+    text = [sample[input_column] for input_column in input_columns if sample[input_column] is not None]
+    assert text
+
+    data = advanced_tokenization(
+        *text,
+        tokenizer=tokenizer,
+        max_sequence_length=max_sequence_length,
+        return_word_ids=True,
+    )
+
+    original_input_ids = data.pop('input_ids')
+
+    input_ids, labels = clusters_random_token_substitution(
+        input_ids=original_input_ids,
+        word_ids=data.pop('word_ids'),
+        probability=probability,
+        whole_word_detection=whole_word_detection,
+        token_to_cluster_map=token_to_cluster_map,
+        counts=counts,
+        beta=beta,
+    )
+
+    # encoder
+    res = dict(data)
+    res['input_ids'] = input_ids
+    res['original_input_ids'] = original_input_ids
     res['token_detection_labels'] = labels
     return res

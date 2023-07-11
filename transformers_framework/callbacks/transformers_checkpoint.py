@@ -17,13 +17,13 @@ PARAMS_FILENAME = "hyperparameters.json"
 
 class TransformersModelCheckpointCallback(Callback):
     r"""
-        This class allow transformer-based models (inherited from the huggingface lib)
-        to be saved and re-used with `--pre_trained_name` argument.
+    This class allow transformer-based models (inherited from the huggingface lib)
+    to be saved and re-used with `--pre_trained_name` argument.
 
-        Command line args:
-        `--checkpoint_interval`: Save pre_trained models every given steps.
-            A None value means save only at the end of each epoch.
-        `--no_val_checkpointing`: Disable transformers checkpointing at each validation epoch end.
+    Command line args:
+    `--checkpoint_interval`: Save pre_trained models every given steps.
+        A None value means save only at the end of each epoch.
+    `--no_val_checkpointing`: Disable transformers checkpointing at each validation epoch end.
     """
 
     def __init__(self, hyperparameters: Namespace, destination: str, *args, **kwargs):
@@ -101,7 +101,6 @@ class TransformersModelCheckpointCallback(Callback):
     def on_train_batch_end(
         self, trainer: Trainer, pl_module: LightningModule, outputs: List[Any], batch: Dict, batch_idx: int
     ):
-        super().on_train_batch_end
         r"""Called when the training batch ends. """
         # only run on main process
         if trainer.global_rank != 0:
