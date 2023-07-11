@@ -1,6 +1,9 @@
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from typing import Any, Dict, Iterable, List, Union
 
+from lightning.pytorch.trainer.states import TrainerFn
+
+from transformers_framework.utilities.datamodules import TrainerFn_to_Names
 from transformers_framework.utilities.initilization import (
     initialize_precision,
     initialize_profiler,
@@ -519,6 +522,17 @@ def add_trainer_args(parser: ArgumentParser):
     parser.add_argument('--reload_dataloaders_every_n_epochs', type=int, default=0, required=False)
 
 
+def apply_fixes(hyperparameters: Namespace) -> Namespace:
+    r""" Apply fixes for easier hyperparameters definitions. """
+
+    # fix over no validation
+    if hyperparameters[f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset'] is None:
+        hyperparameters.num_sanity_val_steps = 0
+        hyperparameters.limit_val_batches = 0
+    
+    return hyperparameters
+
+
 def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
     r""" Just extract generation hyperparameters from namespace. """
 
@@ -526,6 +540,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
     strategy = initialize_strategy(hyperparameters)
     precision = initialize_precision(hyperparameters)
     profiler = initialize_profiler(hyperparameters)
+    hyperparameters = apply_fixes(hyperparameters)
 
     res = dict(
         accelerator=hyperparameters.accelerator,
