@@ -2,6 +2,7 @@ from typing import List, Literal, Union
 
 import numpy as np
 import numpy.typing as npt
+import scipy
 import torch
 from lightning_fabric.utilities.distributed import _distributed_available
 from numba import njit
@@ -381,10 +382,28 @@ def compress_spans_to_unique_tokens(
     return tokens
 
 
-def numpy_multinomial(probabilities: npt.NDArray, generator: np.random.Generator = None) -> npt.NDArray:
+def numpy_multinomial(
+    probabilities: npt.NDArray[np.float32],
+    generator: np.random.Generator = None,
+) -> npt.NDArray[np.int64]:
     r""" Sample `num_samples` elements from a multinomial distribution. """
     if generator is None:
         generator = np.random.default_rng()
 
     positions = generator.multinomial(1, pvals=probabilities)
     return positions.nonzero()[1]
+
+
+def numpy_min_max_softmax_normalization(array: npt.NDArray[np.float32], beta: float = 2.0):
+    r"""Apply min-max norm followed by a softmax. """
+
+    # target_clusters_counts has shape (number_of_substituted_tokens, n_clusters)
+    minimum = array.min(axis=-1, keepdims=True)
+    maximum = array.max(axis=-1, keepdims=True)
+
+    # normalize distribution over target clusters
+    denominator = (maximum - minimum)
+    denominator[denominator == 0] = 1
+
+    min_max_norm_array = (array - minimum) / denominator
+    return scipy.special.softmax(min_max_norm_array * beta, axis=-1)

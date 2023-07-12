@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
-import scipy
 import torch
 
 from transformers_framework.utilities import IGNORE_IDX
@@ -11,6 +10,7 @@ from transformers_framework.utilities.numpy import (
     compress_spans_to_unique_tokens,
     correct_mask_to_cover_words,
     get_generator,
+    numpy_min_max_softmax_normalization,
     numpy_multinomial,
     random_spans_mask,
 )
@@ -159,6 +159,19 @@ def clusters_random_token_substitution(
     counts: torch.Tensor = None,
     beta: float = None,
 ) -> Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
+    r""" Selecting a random subsample of tokens and replacing them with other tokens sampled
+    from a simple statistical distribution of misses.
+
+    Args:
+        input_ids (`npt.NDArray[np.int64]`): list of original input ids
+        word_ids (`npt.NDArray[np.int64]`): original word ids. None is used for special tokens
+        vocab_size (`int`): vocabulary size, used to sample replacements
+        probability (`float`): fraction of tokens to replace
+        whole_word_detection (`bool`): whether to do whole word substitution
+
+    Returns:
+        A tuple with the replaced input ids and the corresponding labels
+    """
 
     if disable:
         return input_ids, None
@@ -188,19 +201,9 @@ def clusters_random_token_substitution(
     # tokens_clusters has shape (number_of_substituted_tokens,) and contains the id of the corresponding cluster
     source_clusters = token_to_cluster_map[tokens_to_swap]
 
-    # source_clusters has shape (number_of_substituted_tokens, n_clusters)
-    target_clusters_counts = counts[source_clusters]
-
-    # target_clusters_counts has shape (number_of_substituted_tokens, n_clusters)
-    minimum = target_clusters_counts.min(axis=-1, keepdims=True)
-    maximum = target_clusters_counts.max(axis=-1, keepdims=True)
-
-    # normalize distribution over target clusters
-    denominator = (maximum - minimum)
-    denominator[denominator == 0] = 1
-
-    target_clusters_counts_norm = (target_clusters_counts - minimum) / denominator
-    target_clusters_probs = scipy.special.softmax(target_clusters_counts_norm * beta, axis=-1)
+    normalized_counts = numpy_min_max_softmax_normalization(counts, beta=beta)
+    target_clusters_probs = normalized_counts[source_clusters]
+    # target_clusters_probs has shape (number_of_substituted_tokens, n_clusters)
 
     # sample target clusters based on probabilities, shape (number_of_substituted_tokens,)
     sample_target_clusters = numpy_multinomial(target_clusters_probs, generator=get_generator()).ravel()
