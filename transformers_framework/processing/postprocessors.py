@@ -148,9 +148,9 @@ def answer_selection_processor(
 
     if k is not None:
         if pad_to_k:
-            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right')
+            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right', dtype=np.int64)
             res['seq_class_labels'] = pad_numpy_sequence(
-                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
         assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
@@ -188,7 +188,7 @@ def seq_class_processor(
     if k is not None:
         if pad_to_k:
             res['seq_class_labels'] = pad_numpy_sequence(
-                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
         assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
@@ -321,7 +321,7 @@ def masked_lm_and_seq_class_processor(
     if k is not None:
         if pad_to_k:
             res['seq_class_labels'] = pad_numpy_sequence(
-                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
         assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
@@ -386,9 +386,9 @@ def masked_lm_and_answer_selection_processor(
 
     if k is not None:
         if pad_to_k:
-            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right')
+            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right', dtype=np.int64)
             res['seq_class_labels'] = pad_numpy_sequence(
-                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
         assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec

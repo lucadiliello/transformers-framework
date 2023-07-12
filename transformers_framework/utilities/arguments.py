@@ -287,6 +287,10 @@ def add_answer_selection_arguments(parser: ArgumentParser):
     )
 
 
+def add_extended_seq_class_arguments(parser: ArgumentParser):
+    parser.add_argument('--classification_head_type', type=str, default=None, required=False)
+
+
 def add_question_answering_arguments(parser: ArgumentParser):
     r""" Add default MR arguments. """
     parser.add_argument(

@@ -69,12 +69,8 @@ class DebertaV2ForExtendedSequenceClassification(DebertaV2PreTrainedModel):
             return_dict=True,
         )
 
-        sequence_output = discriminator_hidden_states.last_hidden_state
-
-        pooled_output = self.pooler(sequence_output)
-        pooled_output = self.dropout(pooled_output)
-
-        logits = self.classifier(pooled_output)
+        discriminator_sequence_output = discriminator_hidden_states.last_hidden_state
+        logits = self.classifier(discriminator_sequence_output)
 
         loss = None
         if labels is not None:
@@ -82,9 +78,9 @@ class DebertaV2ForExtendedSequenceClassification(DebertaV2PreTrainedModel):
             loss = loss_fct(logits.view(-1, self.config.num_labels), labels.flatten())
 
         return SeqClassOutput(
-            last_hidden_state=sequence_output,
-            hidden_states=sequence_output.hidden_states,
-            attentions=sequence_output.attentions,
+            last_hidden_state=discriminator_sequence_output,
+            hidden_states=discriminator_sequence_output.hidden_states,
+            attentions=discriminator_sequence_output.attentions,
             seq_class_loss=loss,
             seq_class_logits=logits,  # (batch_size, k, num_labels)
         )
@@ -105,11 +101,6 @@ class DebertaV2ForPreTrainingAndExtendedSequenceClassification(DebertaV2PreTrain
         self.deberta = DebertaV2Model(config)
         self.add_special_embedding_layer()
         self.discriminator_predictions = DebertaDiscriminatorPredictions(config)
-
-        self.pooler = ContextPooler(config)
-        drop_out = getattr(config, "cls_dropout", None)
-        drop_out = self.config.hidden_dropout_prob if drop_out is None else drop_out
-        self.dropout = StableDropout(drop_out)
 
         self.classifier = ExtendedClassificationHead(config)
 
@@ -164,12 +155,9 @@ class DebertaV2ForPreTrainingAndExtendedSequenceClassification(DebertaV2PreTrain
         )
 
         discriminator_sequence_output = discriminator_hidden_states.last_hidden_state
+
         logits = self.discriminator_predictions(discriminator_sequence_output)
-
-        pooled_output = self.pooler(discriminator_sequence_output)
-        pooled_output = self.dropout(pooled_output)
-
-        classification_logits = self.classifier(pooled_output)
+        classification_logits = self.classifier(discriminator_sequence_output)
 
         td_loss = None
         if token_detection_labels is not None:

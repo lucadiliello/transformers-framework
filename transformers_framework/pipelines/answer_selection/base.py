@@ -89,7 +89,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
             self.MODEL_INPUT_NAMES_TO_REDUCE = None  # do not shrink batches when using separated mode (joint models)
 
     def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.k is not None
+        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
 
     def requires_extended_model(self):
         return self.hyperparameters.k is not None

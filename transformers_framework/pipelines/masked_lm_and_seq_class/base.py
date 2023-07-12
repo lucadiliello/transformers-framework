@@ -58,7 +58,7 @@ class MaskedLMAndSeqClassPipeline(ExtendedPipeline):
         self.test_f1 = MulticlassF1Score(*metrics_args, **metrics_kwargs)
 
     def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2
+        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
 
     def requires_extended_model(self):
         return self.hyperparameters.k is not None

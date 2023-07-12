@@ -12,7 +12,7 @@ from transformers_framework.interfaces.logging import (
     LOSS,
     MASKED_LM_ACCURACY,
     MASKED_LM_LOSS,
-    MASKED_LM_PERPLEXITY,
+    # MASKED_LM_PERPLEXITY,
     SEQ_CLASS_ACCURACY,
     SEQ_CLASS_F1,
     SEQ_CLASS_LOSS,
@@ -21,12 +21,13 @@ from transformers_framework.interfaces.logging import (
     TOKEN_DETECTION_LOSS,
 )
 from transformers_framework.interfaces.step import MaskedLMAndTokenDetectionAndSeqClassStepOutput, SeqClassStepOutput
-from transformers_framework.metrics.perplexity import Perplexity
+# from transformers_framework.metrics.perplexity import Perplexity
 from transformers_framework.pipelines.pipeline.pipeline import ExtendedPipeline
 from transformers_framework.processing.postprocessors import masked_lm_and_seq_class_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import (
     FlexibleArgumentParser,
+    add_extended_seq_class_arguments,
     add_masked_lm_and_token_detection_arguments,
     add_masked_lm_arguments,
     add_seq_class_arguments,
@@ -57,7 +58,7 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         metric_kwargs = dict(average='micro', ignore_index=IGNORE_IDX)
 
         self.train_mlm_acc = MulticlassAccuracy(*metric_args, **metric_kwargs)
-        self.train_mlm_ppl = Perplexity(ignore_index=IGNORE_IDX)
+        # self.train_mlm_ppl = Perplexity(ignore_index=IGNORE_IDX)
 
         # discriminator metrics
         metrics_args = (2, )
@@ -87,15 +88,24 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
     def requires_extended_model(self):
         return self.hyperparameters.k is not None
 
-    def configure_config(self) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         # discriminator config
-        config = self.CONFIG_CLASS.from_pretrained(
-            self.hyperparameters.pre_trained_config, num_labels=self.hyperparameters.num_labels
+        if self.requires_extended_model():
+            CONFIG_CLASS = self.CONFIG_EXTENDED_CLASS
+        if self.hyperparameters.k is not None:
+            kwargs['k'] = self.hyperparameters.k
+        if self.hyperparameters.extended_token_type_ids is not None:
+            kwargs['type_vocab_size'] = max(self.hyperparameters.extended_token_type_ids) + 1
+        if self.hyperparameters.classification_head_type is not None:
+            kwargs['classification_head_type'] = self.hyperparameters.classification_head_type
+
+        config = CONFIG_CLASS.from_pretrained(
+            self.hyperparameters.pre_trained_config, num_labels=self.hyperparameters.num_labels, **kwargs
         )
 
         # generator config
         if self.hyperparameters.pre_trained_generator_config is not None:
-            self.generator_config = self.CONFIG_CLASS.from_pretrained(
+            self.generator_config = self.CONFIG_CLASS.from_pretrained(  # this is still the original config class
                 self.hyperparameters.pre_trained_generator_config
             )
         elif self.hyperparameters.pre_trained_generator_model is not None:
@@ -114,8 +124,11 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
 
         return config
 
-    def configure_model(self, config: PretrainedConfig) -> PreTrainedModel:
+    def configure_model(self, config: PretrainedConfig, **kwargs) -> PreTrainedModel:
         r""" Configure models. """
+        if self.requires_extended_model():
+            self.MODEL_CLASS = self.MODEL_EXTENDED_CLASS
+
         generator = self.load_model(
             self.GENERATOR_MODEL_CLASS, self.hyperparameters.pre_trained_generator_model, config=self.generator_config
         )
@@ -195,7 +208,7 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         step_output = self.step(batch)
 
         train_mlm_acc = self.train_mlm_acc(step_output.masked_lm_predictions, step_output.masked_lm_labels)
-        train_mlm_ppl = self.train_mlm_ppl(step_output.masked_lm_logits.float(), step_output.masked_lm_labels)
+        # train_mlm_ppl = self.train_mlm_ppl(step_output.masked_lm_logits.float(), step_output.masked_lm_labels)
 
         train_discriminator_acc = self.train_discriminator_acc(
             step_output.token_detection_predictions, step_output.token_detection_labels
@@ -210,7 +223,7 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         self.log(LOSS, step_output.loss)
         self.log(MASKED_LM_LOSS, step_output.masked_lm_loss)
         self.log(MASKED_LM_ACCURACY, train_mlm_acc)
-        self.log(MASKED_LM_PERPLEXITY, train_mlm_ppl)
+        # self.log(MASKED_LM_PERPLEXITY, train_mlm_ppl)
         self.log(TOKEN_DETECTION_LOSS, step_output.token_detection_loss)
         self.log(TOKEN_DETECTION_ACCURACY, train_discriminator_acc)
         self.log(TOKEN_DETECTION_F1, train_discriminator_f1)
@@ -292,3 +305,4 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         add_masked_lm_arguments(parser)
         add_seq_class_arguments(parser)
         add_masked_lm_and_token_detection_arguments(parser)
+        add_extended_seq_class_arguments(parser)

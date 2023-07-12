@@ -414,7 +414,8 @@ def pad_numpy_sequence(
     padding_value: Any,
     length: int,
     truncate: bool = True,
-    padding_side: Literal['right', 'left'] = 'right'
+    padding_side: Literal['right', 'left'] = 'right',
+    dtype: npt.DTypeLike = None,
 ) -> List:
     r""" Pad an array with values up to length either on right or left. """
     assert array.ndim == 1
@@ -427,5 +428,8 @@ def pad_numpy_sequence(
             array = np.concatenate([array, [padding_value] * padding_size], axis=0)
         else:
             np.concatenate([[padding_value] * padding_size, array], axis=0)
+
+    if dtype is not None:
+        array = array.astype(dtype)
 
     return array
