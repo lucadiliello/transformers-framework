@@ -140,6 +140,10 @@ class ExtendedPipeline(Pipeline, ABC):
     def __init__(self, hyperparameters):
         super().__init__(hyperparameters)
 
+        assert not self.hyperparameters.pad_to_k or self.hyperparameters.k is not None, (
+            "Cannot set `--pad_to_k` when k is None"
+        )
+
         # checking and fixing classes
         if self.requires_extended_tokenizer():
             if self.TOKENIZER_EXTENDED_CLASS is None or not issubclass(
@@ -195,3 +199,4 @@ class ExtendedPipeline(Pipeline, ABC):
             help="How many extended TT ids should be generated.",
         )
         parser.add_argument('-k', type=int, required=False, default=None)
+        parser.add_argument('--pad_to_k', action="store_true")

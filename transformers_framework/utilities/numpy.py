@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import Any, List, Literal, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -407,3 +407,25 @@ def numpy_min_max_softmax_normalization(array: npt.NDArray[np.float32], beta: fl
 
     min_max_norm_array = (array - minimum) / denominator
     return scipy.special.softmax(min_max_norm_array * beta, axis=-1)
+
+
+def pad_numpy_sequence(
+    array: npt.NDArray,
+    padding_value: Any,
+    length: int,
+    truncate: bool = True,
+    padding_side: Literal['right', 'left'] = 'right'
+) -> List:
+    r""" Pad an array with values up to length either on right or left. """
+    assert array.ndim == 1
+
+    if len(array) > length:
+        return array[:length] if truncate else array
+    else:
+        padding_size = length - len(array)
+        if padding_side == 'right':
+            array = np.concatenate([array, [padding_value] * padding_size], axis=0)
+        else:
+            np.concatenate([[padding_value] * padding_size, array], axis=0)
+
+    return array

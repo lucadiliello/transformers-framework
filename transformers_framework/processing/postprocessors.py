@@ -14,7 +14,7 @@ from transformers_framework.language.modeling import (
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import extract_text_fields_with_multiple_formats
 from transformers_framework.utilities.functional import shift_tokens_right
-from transformers_framework.utilities.numpy import numpy_num_elements
+from transformers_framework.utilities.numpy import numpy_num_elements, pad_numpy_sequence
 from transformers_framework.utilities.processors import (
     generate_new_attention_mask,
     shuffle_sentences_util,
@@ -128,8 +128,9 @@ def answer_selection_processor(
     tokenizer: PreTrainedTokenizerBase,
     max_sequence_length: int,
     extended_token_type_ids: List[int] = None,
-    k: int = 1,
+    k: int = None,
     separated: bool = False,
+    pad_to_k: bool = False,
 ):
     r""" Tokenize text string and prepare for AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -146,7 +147,14 @@ def answer_selection_processor(
     res['seq_class_labels'] = np.array(sample[label_column])
 
     if k is not None:
+        if pad_to_k:
+            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right')
+            res['seq_class_labels'] = pad_numpy_sequence(
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+            )
+
         assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
+        assert len(set(res['index'])) == 1  # nosec
         assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
             f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
         )
@@ -161,8 +169,9 @@ def seq_class_processor(
     tokenizer: PreTrainedTokenizerBase,
     max_sequence_length: int,
     extended_token_type_ids: List[int] = None,
-    k: int = 1,
+    k: int = None,
     separated: bool = False,
+    pad_to_k: bool = False,
 ):
     r""" Tokenize text string and prepare for sequence classification. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -177,7 +186,14 @@ def seq_class_processor(
 
     res['seq_class_labels'] = np.array(sample[label_column])
     if k is not None:
-        assert numpy_num_elements(res['seq_class_labels']) == k  # nosec
+        if pad_to_k:
+            res['seq_class_labels'] = pad_numpy_sequence(
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+            )
+
+        assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
+            f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
+        )
 
     return res
 
@@ -262,9 +278,10 @@ def masked_lm_and_seq_class_processor(
     whole_word_masking: bool,
     training: bool,
     extended_token_type_ids: List[int] = None,
-    k: int = 1,
+    k: int = None,
     return_original_input_ids: bool = False,
     separated: bool = False,
+    pad_to_k: bool = False,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -302,7 +319,14 @@ def masked_lm_and_seq_class_processor(
     # answer selection labels
     res['seq_class_labels'] = np.array(sample[label_column])
     if k is not None:
-        assert numpy_num_elements(res['seq_class_labels']) == k  # nosec
+        if pad_to_k:
+            res['seq_class_labels'] = pad_numpy_sequence(
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+            )
+
+        assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
+            f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
+        )
 
     return res
 
@@ -321,8 +345,9 @@ def masked_lm_and_answer_selection_processor(
     whole_word_masking: bool,
     training: bool,
     extended_token_type_ids: List[int] = None,
-    k: int = 1,
+    k: int = None,
     separated: bool = False,
+    pad_to_k: bool = False,
 ):
     r""" Tokenize text string and prepare for MLM + AS2. """
     text = extract_text_fields_with_multiple_formats(sample, input_columns)
@@ -360,8 +385,17 @@ def masked_lm_and_answer_selection_processor(
     res['seq_class_labels'] = np.array(sample[label_column])
 
     if k is not None:
-        assert numpy_num_elements(res['index']) == k  # nosec
-        assert numpy_num_elements(res['seq_class_labels']) == k  # nosec
+        if pad_to_k:
+            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right')
+            res['seq_class_labels'] = pad_numpy_sequence(
+                res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right'
+            )
+
+        assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
+        assert len(set(res['index'])) == 1  # nosec
+        assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
+            f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
+        )
 
     return res
 

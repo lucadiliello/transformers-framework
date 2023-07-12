@@ -52,9 +52,6 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         super().__init__(hyperparameters)
         self.tie_weights()
 
-        # needed till full support for multiple classification is implemented
-        assert self.hyperparameters.k is None  # nosec
-
         # generator metrics
         metric_args = (self.tokenizer.vocab_size, )
         metric_kwargs = dict(average='micro', ignore_index=IGNORE_IDX)
@@ -85,7 +82,7 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         r""" Do every sort of weight tying here. """
 
     def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2
+        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
 
     def requires_extended_model(self):
         return self.hyperparameters.k is not None
@@ -233,12 +230,10 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
 
         discriminator_output: TokenDetectionAndSeqClassOutput = self.forward(**batch)
 
-        seq_class_predictions = discriminator_output.seq_class_logits.argmax(dim=-1)
-
         return SeqClassStepOutput(
             loss=discriminator_output.seq_class_loss,
             seq_class_loss=discriminator_output.seq_class_loss,
-            seq_class_predictions=seq_class_predictions,
+            seq_class_predictions=discriminator_output.seq_class_predictions,
             seq_class_labels=batch['seq_class_labels'],
         )
 
@@ -283,6 +278,7 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
             extended_token_type_ids=self.hyperparameters.extended_token_type_ids,
             k=self.hyperparameters.k,
             return_original_input_ids=True,
+            pad_to_k=self.hyperparameters.pad_to_k,
         )
 
     @classmethod
