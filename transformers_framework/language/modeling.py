@@ -155,9 +155,10 @@ def clusters_random_token_substitution(
     probability: float = 0.15,
     whole_word_detection: bool = False,
     disable: bool = False,
-    token_to_cluster_map: torch.Tensor = None,
+    token_to_cluster_map: npt.NDArray[np.int64] = None,
     counts: torch.Tensor = None,
     beta: float = None,
+    list_forbitten_replacements: List[int] = None,
 ) -> Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]:
     r""" Selecting a random subsample of tokens and replacing them with other tokens sampled
     from a simple statistical distribution of misses.
@@ -211,6 +212,8 @@ def clusters_random_token_substitution(
     # define a uniform probability over the elements in each cluster
     if not hasattr(clusters_random_token_substitution, 'candidates'):
         candidates = np.expand_dims(token_to_cluster_map, axis=0) == np.expand_dims(np.arange(counts.shape[0]), axis=-1)
+        if list_forbitten_replacements:
+            candidates[:, list_forbitten_replacements] = 0.0
         candidates = candidates / candidates.sum(-1, keepdims=True)
         clusters_random_token_substitution.candidates = candidates
     else:

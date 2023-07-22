@@ -147,6 +147,7 @@ class ClusterRandomTokenDetectionPipeline(RandomTokenDetectionPipeline):
             token_to_cluster_map=self.token_to_cluster_map_numpy,
             counts=self.counts_numpy,
             beta=self.hyperparameters.beta,
+            list_forbitten_replacements=self.tokenizer.all_special_ids,
         )
 
     @classmethod

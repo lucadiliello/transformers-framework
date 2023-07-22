@@ -2,7 +2,6 @@ from typing import Any, List, Literal, Union
 
 import numpy as np
 import numpy.typing as npt
-import scipy
 import torch
 from lightning_fabric.utilities.distributed import _distributed_available
 from numba import njit
@@ -394,19 +393,27 @@ def numpy_multinomial(
     return positions.nonzero()[1]
 
 
+@njit
+def numpy_softmax(z, axis: int = -1):
+    num = np.exp(z)
+    s = num / np.sum(np.exp(z), axis)
+    return s
+
+
+@njit
 def numpy_min_max_softmax_normalization(array: npt.NDArray[np.float32], beta: float = 2.0):
     r"""Apply min-max norm followed by a softmax. """
 
     # target_clusters_counts has shape (number_of_substituted_tokens, n_clusters)
-    minimum = array.min(axis=-1, keepdims=True)
-    maximum = array.max(axis=-1, keepdims=True)
+    minimum = np.array([np.min(a) for a in array])
+    maximum = np.array([np.max(a) for a in array])
 
     # normalize distribution over target clusters
     denominator = (maximum - minimum)
     denominator[denominator == 0] = 1
 
     min_max_norm_array = (array - minimum) / denominator
-    return scipy.special.softmax(min_max_norm_array * beta, axis=-1)
+    return numpy_softmax(min_max_norm_array * beta, axis=-1)
 
 
 def pad_numpy_sequence(

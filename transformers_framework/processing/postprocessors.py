@@ -580,6 +580,7 @@ def clustered_random_token_detection_processor(
     token_to_cluster_map: torch.Tensor,
     counts: torch.Tensor,
     beta: float,
+    list_forbitten_replacements: List[int],
 ):
     r""" Tokenize text string and prepare for Cluster-based RTD. """
     assert 1 <= len(input_columns) <= 2, f"Allowed 1 or 2 inputs in `masked_lm_processor`, got {len(input_columns)}"
@@ -604,6 +605,7 @@ def clustered_random_token_detection_processor(
         token_to_cluster_map=token_to_cluster_map,
         counts=counts,
         beta=beta,
+        list_forbitten_replacements=list_forbitten_replacements,
     )
 
     # encoder
