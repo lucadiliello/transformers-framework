@@ -4,13 +4,11 @@ from typing import Any, Dict, List, Literal
 from datasets import Dataset, Sequence
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
-from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.datasets import datasets_disable_caching
 from transformers_framework.utilities.functional import (
     argsort_list,
     dict2list,
     list2dict,
-    pad_sequence,
     shuffle_lists,
     sort_lists,
     split,
