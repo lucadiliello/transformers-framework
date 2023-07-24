@@ -243,6 +243,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
             extended_token_type_ids=self.hyperparameters.extended_token_type_ids,
             k=self.hyperparameters.k,
             separated=self.hyperparameters.separated,
+            pad_to_k=self.hyperparameters.pad_to_k,
         )
 
     @classmethod
@@ -277,7 +278,6 @@ def preprocess(
         k=self.hyperparameters.k,
         num_workers=num_workers,
         batch_size=batch_size,
-        pad=True,
         grouping=self.hyperparameters.grouping,
         selection=self.hyperparameters.selection,
         scores_column=self.hyperparameters.scores_column,

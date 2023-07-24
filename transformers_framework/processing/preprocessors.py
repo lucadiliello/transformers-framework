@@ -79,7 +79,6 @@ def _group_fn(
     index_column: str = None,
     label_column: str = None,
     k: int = None,
-    pad: bool = True,
     selection: Literal['best', 'worst'] = None,
     scores_column: str = None,
     grouping: str = Literal['random', 'fixed'],
@@ -116,11 +115,6 @@ def _group_fn(
             split(example[answer_column], part_length=k),
             split(example[label_column], part_length=k),
         ):
-            if pad:
-                idx = pad_sequence(idx, -1, k, truncate=True, padding_side='right')
-                # pad_sequence(answers, "", k, truncate=True, padding_side='right')
-                labels = pad_sequence(labels, IGNORE_IDX, k, truncate=True, padding_side='right')
-
             res.append({
                 question_column: example[question_column],
                 index_column: idx,
@@ -140,7 +134,6 @@ def answer_selection_grouping(
     k: int = None,
     num_workers: int = cpu_count(),
     batch_size: int = None,
-    pad: bool = True,
     grouping: str = Literal['random', 'fixed'],
     selection: Literal['best', 'worst'] = None,
     scores_column: str = None,
@@ -173,7 +166,6 @@ def answer_selection_grouping(
         index_column=index_column,
         label_column=label_column,
         k=k,
-        pad=pad,
         grouping=grouping,
         selection=selection,
         scores_column=scores_column,

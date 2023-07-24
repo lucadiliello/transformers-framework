@@ -1,10 +1,5 @@
 from torch import nn
-from transformers.models.deberta_v2.modeling_deberta_v2 import (
-    ContextPooler,
-    DebertaV2Model,
-    DebertaV2PreTrainedModel,
-    StableDropout,
-)
+from transformers.models.deberta_v2.modeling_deberta_v2 import DebertaV2Model, DebertaV2PreTrainedModel
 
 from transformers_framework.architectures.deberta_v2.configuration_deberta_v2 import DebertaV2ExtendedConfig
 from transformers_framework.architectures.deberta_v2.modeling_deberta_v2 import (
@@ -29,11 +24,6 @@ class DebertaV2ForExtendedSequenceClassification(DebertaV2PreTrainedModel):
             raise ValueError("This model cannot be used as decoder")
 
         self.deberta = DebertaV2Model(config)
-
-        self.pooler = ContextPooler(config)
-        drop_out = getattr(config, "cls_dropout", None)
-        drop_out = self.config.hidden_dropout_prob if drop_out is None else drop_out
-        self.dropout = StableDropout(drop_out)
 
         self.classifier = ExtendedClassificationHead(config)
 
@@ -69,8 +59,7 @@ class DebertaV2ForExtendedSequenceClassification(DebertaV2PreTrainedModel):
             return_dict=True,
         )
 
-        discriminator_sequence_output = discriminator_hidden_states.last_hidden_state
-        logits = self.classifier(discriminator_sequence_output)
+        logits = self.classifier(discriminator_hidden_states.last_hidden_state)
 
         loss = None
         if labels is not None:
@@ -78,9 +67,9 @@ class DebertaV2ForExtendedSequenceClassification(DebertaV2PreTrainedModel):
             loss = loss_fct(logits.view(-1, self.config.num_labels), labels.flatten())
 
         return SeqClassOutput(
-            last_hidden_state=discriminator_sequence_output,
-            hidden_states=discriminator_sequence_output.hidden_states,
-            attentions=discriminator_sequence_output.attentions,
+            last_hidden_state=discriminator_hidden_states.last_hidden_state,
+            hidden_states=discriminator_hidden_states.hidden_states,
+            attentions=discriminator_hidden_states.attentions,
             seq_class_loss=loss,
             seq_class_logits=logits,  # (batch_size, k, num_labels)
         )

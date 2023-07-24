@@ -8,11 +8,10 @@ from transformers.modeling_utils import PreTrainedModel
 
 from transformers_framework.architectures.modeling_outputs import MaskedLMOutput, TokenDetectionAndSeqClassOutput
 from transformers_framework.interfaces.adaptation import masked_lm_adaptation
-from transformers_framework.interfaces.logging import (
+from transformers_framework.interfaces.logging import (  # MASKED_LM_PERPLEXITY,
     LOSS,
     MASKED_LM_ACCURACY,
     MASKED_LM_LOSS,
-    # MASKED_LM_PERPLEXITY,
     SEQ_CLASS_ACCURACY,
     SEQ_CLASS_F1,
     SEQ_CLASS_LOSS,

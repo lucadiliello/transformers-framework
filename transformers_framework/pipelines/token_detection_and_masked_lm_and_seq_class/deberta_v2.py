@@ -2,8 +2,8 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.models.deberta_v2.configuration_deberta_v2 import DebertaV2Config
 from transformers.models.deberta_v2.modeling_deberta_v2 import DebertaV2ForMaskedLM
 from transformers.models.deberta_v2.tokenization_deberta_v2_fast import DebertaV2TokenizerFast
-from transformers_framework.architectures.deberta_v2.configuration_deberta_v2 import DebertaV2ExtendedConfig
 
+from transformers_framework.architectures.deberta_v2.configuration_deberta_v2 import DebertaV2ExtendedConfig
 from transformers_framework.architectures.deberta_v2.modeling_deberta_v2 import (
     DebertaV2ForPreTrainingAndSequenceClassification,
 )

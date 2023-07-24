@@ -148,13 +148,15 @@ def answer_selection_processor(
 
     if k is not None:
         if pad_to_k:
-            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right', dtype=np.int64)
+            res['index'] = pad_numpy_sequence(
+                res['index'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
+            )
             res['seq_class_labels'] = pad_numpy_sequence(
                 res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
-        assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
-        assert len(set(res['index'])) == 1  # nosec
+        assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"
+        assert len(set(r for r in res['index'] if r != IGNORE_IDX)) == 1  # nosec
         assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
             f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
         )
@@ -386,13 +388,15 @@ def masked_lm_and_answer_selection_processor(
 
     if k is not None:
         if pad_to_k:
-            res['index'] = pad_numpy_sequence(res['index'], -1, k, truncate=True, padding_side='right', dtype=np.int64)
+            res['index'] = pad_numpy_sequence(
+                res['index'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
+            )
             res['seq_class_labels'] = pad_numpy_sequence(
                 res['seq_class_labels'], IGNORE_IDX, k, truncate=True, padding_side='right', dtype=np.int64
             )
 
         assert numpy_num_elements(res['index']) == k, f"expected {k}, got {numpy_num_elements(res['index'])}"  # nosec
-        assert len(set(res['index'])) == 1  # nosec
+        assert len(set(r for r in res['index'] if r != IGNORE_IDX)) == 1  # nosec
         assert numpy_num_elements(res['seq_class_labels']) == k, (  # nosec
             f"expected {k}, got {numpy_num_elements(res['seq_class_labels'])}"
         )
