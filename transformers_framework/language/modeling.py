@@ -177,6 +177,25 @@ def clusters_random_token_substitution(
     if disable:
         return input_ids, None
 
+    # instantiate random generator
+    generator = get_generator()
+
+    # define a dict mapping cluster number to list of possible tokens for that cluster
+    # resulting candidates variable has shape (n_clusters, vocabulary_size)
+    if not hasattr(clusters_random_token_substitution, 'token_to_cluster_list'):
+        token_to_cluster_list = [np.array([], dtype=np.int64)] * counts.shape[0]
+        for t, c in enumerate(token_to_cluster_map):
+            if not list_forbitten_replacements or t not in list_forbitten_replacements:
+                token_to_cluster_list[c] = np.append(token_to_cluster_list[c], t)
+        # convert values to numpy arrays
+        token_to_cluster_list = np.array(token_to_cluster_list, dtype=object)
+        clusters_random_token_substitution.token_to_cluster_list = token_to_cluster_list
+    else:
+        token_to_cluster_list = clusters_random_token_substitution.token_to_cluster_list
+
+    # normalizations
+    normalized_counts = numpy_min_max_softmax_normalization(counts, beta=beta)
+
     # make a copy to avoid modifying the originals
     replaced_input_ids = input_ids.copy()
     replaced_labels = np.full(input_ids.shape, fill_value=0, dtype=int)
@@ -194,7 +213,7 @@ def clusters_random_token_substitution(
     special_tokens_mask = (word_ids == IGNORE_IDX)
     probability_matrix[special_tokens_mask] = 0.0
 
-    substituted_indices = get_generator().binomial(n=1, p=probability_matrix).astype(dtype=np.bool_)
+    substituted_indices = generator.binomial(n=1, p=probability_matrix).astype(dtype=np.bool_)
 
     # tokens_to_swap has shape (number_of_substituted_tokens,)
     tokens_to_swap = replaced_input_ids[substituted_indices]
@@ -202,28 +221,16 @@ def clusters_random_token_substitution(
     # tokens_clusters has shape (number_of_substituted_tokens,) and contains the id of the corresponding cluster
     source_clusters = token_to_cluster_map[tokens_to_swap]
 
-    normalized_counts = numpy_min_max_softmax_normalization(counts, beta=beta)
-    target_clusters_probs = normalized_counts[source_clusters]
     # target_clusters_probs has shape (number_of_substituted_tokens, n_clusters)
+    target_clusters_probs = normalized_counts[source_clusters]
 
     # sample target clusters based on probabilities, shape (number_of_substituted_tokens,)
-    sample_target_clusters = numpy_multinomial(target_clusters_probs, generator=get_generator()).ravel()
+    sample_target_clusters = numpy_multinomial(target_clusters_probs, generator=generator).ravel()
 
-    # define a uniform probability over the elements in each cluster
-    if not hasattr(clusters_random_token_substitution, 'candidates'):
-        candidates = np.expand_dims(token_to_cluster_map, axis=0) == np.expand_dims(np.arange(counts.shape[0]), axis=-1)
-        if list_forbitten_replacements:
-            candidates[:, list_forbitten_replacements] = 0.0
-        candidates = candidates / candidates.sum(-1, keepdims=True)
-        clusters_random_token_substitution.candidates = candidates
-    else:
-        candidates = clusters_random_token_substitution.candidates
-
-    # select target clusters
-    target_clusters = candidates[sample_target_clusters]
-
-    # choose words randomly from new clusters (number_of_substituted_tokens, n_clusters)
-    random_words = numpy_multinomial(target_clusters, generator=get_generator()).ravel()
+    # choose words randomly from new clusters (number_of_substituted_tokens,)
+    random_words = [
+        generator.choice(token_to_cluster_list[target_cluster]) for target_cluster in sample_target_clusters
+    ]
 
     # substitute
     replaced_input_ids[substituted_indices] = random_words
