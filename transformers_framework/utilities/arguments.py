@@ -531,7 +531,9 @@ def apply_fixes(hyperparameters: ExtendedNamespace) -> ExtendedNamespace:
     r""" Apply fixes for easier hyperparameters definitions. """
 
     # fix over no validation
-    if hyperparameters.get(f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset', False) is None:
+    if f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset' not in hyperparameters or (
+        hyperparameters[f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset'] is None
+    ):
         hyperparameters.num_sanity_val_steps = 0
         hyperparameters.limit_val_batches = 0
 
