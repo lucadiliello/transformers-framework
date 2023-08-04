@@ -2,6 +2,7 @@ from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from typing import Any, Dict, Iterable, List, Union
 
 from lightning.pytorch.trainer.states import TrainerFn
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 from transformers_framework.utilities.datamodules import TrainerFn_to_Names
 from transformers_framework.utilities.initilization import (
@@ -526,18 +527,18 @@ def add_trainer_args(parser: ArgumentParser):
     parser.add_argument('--reload_dataloaders_every_n_epochs', type=int, default=0, required=False)
 
 
-def apply_fixes(hyperparameters: Namespace) -> Namespace:
+def apply_fixes(hyperparameters: ExtendedNamespace) -> ExtendedNamespace:
     r""" Apply fixes for easier hyperparameters definitions. """
 
     # fix over no validation
-    if hyperparameters[f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset'] is None:
+    if hyperparameters.get(f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset', False) is None:
         hyperparameters.num_sanity_val_steps = 0
         hyperparameters.limit_val_batches = 0
-    
+
     return hyperparameters
 
 
-def get_trainer_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
+def get_trainer_args_from_hyperparameters(hyperparameters: ExtendedNamespace) -> Dict:
     r""" Just extract generation hyperparameters from namespace. """
 
     # strategies and precision setup
