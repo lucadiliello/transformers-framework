@@ -58,7 +58,6 @@ class MaskedLMAndAnswerSelectionPipeline(ExtendedPipeline):
         # validation metrics
         metrics_kwargs = dict(
             empty_target_action=hyperparameters.metrics_empty_target_action,
-            compute_on_step=False,
             ignore_idx=IGNORE_IDX,
         )
         self.valid_acc = BinaryAccuracy()

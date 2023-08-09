@@ -62,7 +62,6 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         # validation metrics
         metrics_kwargs = dict(
             empty_target_action=hyperparameters.metrics_empty_target_action,
-            compute_on_step=False,
             ignore_index=IGNORE_IDX,
         )
         self.valid_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
