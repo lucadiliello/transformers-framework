@@ -1,7 +1,7 @@
 import json
 import os
 from argparse import Namespace
-from typing import Dict, Generator, Iterable, List, Union
+from typing import Dict, Generator, Iterable, Union
 
 import torch
 import yaml
