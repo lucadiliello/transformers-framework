@@ -160,3 +160,22 @@ def clean_device_cache():
         garbage_collection_cuda()
     elif torch.backends.mps.is_available():  # Apple MPS
         torch.mps.empty_cache()
+
+
+def logits_to_binary_prediction(logits: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
+    r""" Receives a tensor of floats with shape (batch_size,) and return a
+    tensor with the same shape and integers in [0, 1].
+    Applies a sigmoid and a comparison with the threshold.
+    """
+    preds = torch.sigmoid(logits)
+    preds = (preds > threshold).to(dtype=torch.int64)
+    return preds
+
+
+def similarities_to_binary_prediction(similarities: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
+    r""" Receives a tensor of floats with shape (batch_size,) and return a
+    tensor with the same shape and integers in [0, 1].
+    Applies a comparison with the threshold.
+    """
+    preds = (similarities > threshold).to(dtype=torch.int64)
+    return preds

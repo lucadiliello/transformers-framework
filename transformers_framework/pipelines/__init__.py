@@ -8,6 +8,7 @@ from transformers_framework.pipelines.masked_lm_and_seq_class import models as m
 from transformers_framework.pipelines.masked_lm_and_token_class import models as masked_lm_token_class_models
 from transformers_framework.pipelines.question_answering import models as question_answering_models
 from transformers_framework.pipelines.random_token_detection import models as random_token_detection_models
+from transformers_framework.pipelines.retrieval import models as retrieval_models
 from transformers_framework.pipelines.seq_class import models as seq_class_models
 from transformers_framework.pipelines.summarization import models as summarization_models
 from transformers_framework.pipelines.token_class import models as token_class_models
@@ -33,4 +34,5 @@ pipelines = dict(
     question_answering=question_answering_models,
     denoising=denoising_models,
     summarization=summarization_models,
+    retrieval=retrieval_models,
 )

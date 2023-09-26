@@ -17,11 +17,11 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers_framework.architectures.modeling_outputs import SeqClassOutput
 from transformers_framework.interfaces.adaptation import sequence_classification_adaptation
 from transformers_framework.interfaces.logging import (
-    ANSWER_SELECTION_HR_5,
+    ANSWER_SELECTION_HR,
     ANSWER_SELECTION_MAP,
     ANSWER_SELECTION_MRR,
     ANSWER_SELECTION_NDCG,
-    ANSWER_SELECTION_P_1,
+    ANSWER_SELECTION_PRECISION,
     LOSS,
     SEQ_CLASS_ACCURACY,
     SEQ_CLASS_F1,
@@ -213,8 +213,8 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         super().on_validation_epoch_end()
         self.log(ANSWER_SELECTION_MAP, self.valid_map.compute())
         self.log(ANSWER_SELECTION_MRR, self.valid_mrr.compute())
-        self.log(ANSWER_SELECTION_P_1, self.valid_p1.compute())
-        self.log(ANSWER_SELECTION_HR_5, self.valid_hr5.compute())
+        self.log(ANSWER_SELECTION_PRECISION(1), self.valid_p1.compute())
+        self.log(ANSWER_SELECTION_HR(5), self.valid_hr5.compute())
         self.log(ANSWER_SELECTION_NDCG, self.valid_ndgc.compute())
 
     def on_test_epoch_end(self):
@@ -222,8 +222,8 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         super().on_test_epoch_end()
         self.log(ANSWER_SELECTION_MAP, self.test_map.compute())
         self.log(ANSWER_SELECTION_MRR, self.test_mrr.compute())
-        self.log(ANSWER_SELECTION_P_1, self.test_p1.compute())
-        self.log(ANSWER_SELECTION_HR_5, self.test_hr5.compute())
+        self.log(ANSWER_SELECTION_PRECISION(1), self.test_p1.compute())
+        self.log(ANSWER_SELECTION_HR(5), self.test_hr5.compute())
         self.log(ANSWER_SELECTION_NDCG, self.test_ndgc.compute())
 
     def predict_step(self, batch, *args):

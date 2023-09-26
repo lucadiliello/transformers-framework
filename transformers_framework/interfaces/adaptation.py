@@ -1,6 +1,7 @@
 from typing import Dict
 
 import torch
+from transformers.modeling_outputs import BaseModelOutput
 from transformers.modeling_outputs import MaskedLMOutput as TransformersMaskedLMOutput
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 from transformers.modeling_outputs import Seq2SeqLMOutput as TransformersSeq2SeqLMOutput
@@ -8,6 +9,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput, TokenClassif
 from transformers.models.electra.modeling_electra import ElectraForPreTrainingOutput
 
 from transformers_framework.architectures.modeling_outputs import (
+    EmbeddingOutput,
     MaskedLMAndTokenClassOutput,
     MaskedLMOutput,
     QuestionAnsweringOutput,
@@ -39,6 +41,18 @@ def sequence_classification_adaptation(res: SequenceClassifierOutput) -> SeqClas
         hidden_states=res.hidden_states,
         seq_class_loss=res.loss,
         seq_class_logits=res.logits,
+    )
+
+
+def retrieval_adaptation(res: BaseModelOutput) -> EmbeddingOutput:
+    r""" Convert transformers SequenceClassifierOutput to our SeqClassOutput. """
+    if isinstance(res, EmbeddingOutput):
+        return res
+
+    return EmbeddingOutput(
+        attentions=res.attentions,
+        hidden_states=res.hidden_states,
+        last_hidden_state=res.last_hidden_state,
     )
 
 

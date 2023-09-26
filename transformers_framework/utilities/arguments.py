@@ -2,8 +2,8 @@ from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from typing import Any, Dict, Iterable, List, Union
 
 from lightning.pytorch.trainer.states import TrainerFn
-from transformers_framework.utilities.classes import ExtendedNamespace
 
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.datamodules import TrainerFn_to_Names
 from transformers_framework.utilities.initilization import (
     initialize_precision,
@@ -279,6 +279,17 @@ def add_token_class_arguments(parser: ArgumentParser):
 
 def add_answer_selection_arguments(parser: ArgumentParser):
     r""" Add default AS2 arguments. """
+    parser.add_argument(
+        '--metrics_empty_target_action',
+        choices=('skip', 'neg', 'pos', 'error'),
+        default='skip',
+        required=False,
+        help="Empty target action for test metrics",
+    )
+
+
+def add_retrieval_arguments(parser: ArgumentParser):
+    r""" Add default Retrieval arguments. """
     parser.add_argument(
         '--metrics_empty_target_action',
         choices=('skip', 'neg', 'pos', 'error'),

@@ -31,6 +31,15 @@ class SeqToSeqGenStepOutput(StepOutput):
 
 
 @dataclass
+class RetrievalStepOutput(StepOutput):
+    retrieval_loss: torch.Tensor
+    retrieval_index: torch.Tensor
+    retrieval_scores: torch.Tensor
+    retrieval_predictions: torch.Tensor
+    retrieval_labels: torch.Tensor
+
+
+@dataclass
 class SeqClassStepOutput(StepOutput):
     seq_class_loss: torch.Tensor
     seq_class_predictions: torch.Tensor

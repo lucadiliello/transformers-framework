@@ -13,3 +13,4 @@ numba>=0.56.4
 blingfire>=0.1.8
 nltk>=3.8.1
 boto3
+sentence-transformers>=2.2.2

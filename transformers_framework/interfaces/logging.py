@@ -14,11 +14,19 @@ SEQ_CLASS_F1 = 'seq_class/f1'
 # answer selection
 ANSWER_SELECTION_MAP = 'answer_selection/mean_average_precision'
 ANSWER_SELECTION_MRR = 'answer_selection/mean_reciprocal_rank'
-ANSWER_SELECTION_P_1 = 'answer_selection/precision@1'
-ANSWER_SELECTION_P_5 = 'answer_selection/precision@5'
+ANSWER_SELECTION_PRECISION = lambda i: f'answer_selection/precision@{i}'  # noqa: E731
 ANSWER_SELECTION_NDCG = 'answer_selection/ndgc'
-ANSWER_SELECTION_NDCG_10 = 'answer_selection/ndgc@10'
-ANSWER_SELECTION_HR_5 = 'answer_selection/hitrate@5'
+ANSWER_SELECTION_HR = lambda i: f'answer_selection/hitrate@{i}'  # noqa: E731
+
+# information retrieval
+RETRIEVAL_LOSS = 'retrieval/loss'
+RETRIEVAL_ACCURACY = 'retrieval/accuracy'
+RETRIEVAL_F1 = 'retrieval/f1'
+RETRIEVAL_MAP = 'retrieval/mean_average_precision'
+RETRIEVAL_MRR = 'retrieval/mean_reciprocal_rank'
+RETRIEVAL_PRECISION = lambda i: f'retrieval/precision@{i}'  # noqa: E731
+RETRIEVAL_NDCG = 'retrieval/ndgc'
+RETRIEVAL_HR = lambda i: f'retrieval/hitrate@{i}'  # noqa: E731
 
 # seq-to-seq language modeling
 SEQ_TO_SEQ_LM_LOSS = 'seq_to_seq_lm/loss'

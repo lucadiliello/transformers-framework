@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 from transformers.modeling_outputs import BaseModelOutput
@@ -107,6 +107,12 @@ class SeqClassOutput(BaseModelOutput):
 
     seq_class_loss: Optional[torch.FloatTensor] = None
     seq_class_logits: Optional[torch.FloatTensor] = None
+
+
+class EmbeddingOutput(BaseModelOutput):
+    r"""
+    Base class for embedding outputs. Identical to BaseModelOutput.
+    """
 
 
 @dataclass

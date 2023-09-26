@@ -618,3 +618,30 @@ def clustered_random_token_detection_processor(
     res['original_input_ids'] = original_input_ids
     res['token_detection_labels'] = labels
     return res
+
+
+def retrieval_processor(
+    sample: Dict[str, Any],
+    input_columns: str,
+    index_column: str,
+    label_column: str,
+    tokenizer: PreTrainedTokenizerBase,
+    max_sequence_length: List[int],
+    k: int = 2,
+):
+    r""" Tokenize text string and prepare for AS2. """
+    text = extract_text_fields_with_multiple_formats(sample, input_columns)
+
+    assert len(text) == k, f"number of effective fields to encode must be {k}, found {input_columns}"
+    assert len(max_sequence_length) == k, f"number of sequence lengths must be {k}, found {max_sequence_length}"
+
+    res = dict()
+    for i, (t, msl) in enumerate(zip(text, max_sequence_length)):
+        data = dict(advanced_tokenization(t, tokenizer=tokenizer, max_sequence_length=msl))
+        data = {f"{k}_{i}": v for k, v in data.items()}
+        res.update(data)
+
+    res['index'] = np.array(sample[index_column])
+    res['retrieval_labels'] = np.array(sample[label_column])
+
+    return res
