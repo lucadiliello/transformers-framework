@@ -7,6 +7,7 @@ from lightning.pytorch.profilers.profiler import Profiler
 from lightning.pytorch.profilers.pytorch import PyTorchProfiler
 from lightning.pytorch.strategies.ddp import DDPStrategy
 from lightning.pytorch.strategies.strategy import Strategy
+from lightning.pytorch.plugins import BitsandbytesPrecisionPlugin
 
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
@@ -24,15 +25,6 @@ def initialize_strategy(hyperparameters: ExtendedNamespace) -> Union[Strategy, s
 
     if hyperparameters.strategy == "ddp":
         return DDPStrategy(find_unused_parameters=False)
-
-    elif hyperparameters.strategy == "colossalai":
-        from lightning_colossalai import ColossalAIStrategy
-        return ColossalAIStrategy(
-            use_chunk=False,
-            enable_distributed_storage=True,
-            placement_policy='cuda',
-            initial_scale=32,
-        )
 
     elif hyperparameters.strategy == 'deepspeed_stage_2_offload_no_error':
         import deepspeed
@@ -74,8 +66,10 @@ def initialize_strategy(hyperparameters: ExtendedNamespace) -> Union[Strategy, s
 def initialize_precision(hyperparameters: ExtendedNamespace) -> Union[str, int]:
     r""" Checks over precision and used model. """
 
+    precision = hyperparameters.precision
+
     # no gradient clipping needed if running with fp16
-    if hyperparameters.precision in ('16-mixed', '16-true') and hyperparameters.gradient_clip_val:
+    if precision in ('16-mixed', '16-true') and hyperparameters.gradient_clip_val:
         rank_zero_warn(
             "There is no need to use `gradient_clip_val` with `precision=16-*` "
             "since gradients are scaled automatically before the optimization step."
@@ -97,16 +91,20 @@ def initialize_precision(hyperparameters: ExtendedNamespace) -> Union[str, int]:
         torch.backends.cudnn.allow_tf32 = allow_tf32
         torch.backends.cuda.matmul.allow_tf32 = allow_tf32
 
+    # bitsandbytes
+    if precision in ('nf4', 'f4-dq', 'fp4', 'fp4-dq', 'int8', 'int8-training'):
+        return BitsandbytesPrecisionPlugin(precision)
+
     if 't5' in hyperparameters.model:
-        if hyperparameters.precision == '16-mixed' and hyperparameters.get('accelerator') != 'mps':
+        if precision == '16-mixed' and hyperparameters.get('accelerator') != 'mps':
             rank_zero_warn("Precision set to '16-mixed' but model is T5. Changing precision to 'bf16-mixed' for you.")
             return 'bf16-mixed'
 
-        if hyperparameters.precision == '16-true' and hyperparameters.get('accelerator') != 'mps':
+        if precision == '16-true' and hyperparameters.get('accelerator') != 'mps':
             rank_zero_warn("Precision set to '16-true' but model is T5. Changing precision to 'bf16-true' for you.")
             return 'bf16-true'
 
-    return hyperparameters.precision
+    return precision
 
 
 def initialize_profiler(hyperparameters: ExtendedNamespace) -> Union[str, Profiler]:
