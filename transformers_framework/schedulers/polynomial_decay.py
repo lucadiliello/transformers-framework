@@ -1,5 +1,5 @@
 import math
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 import torch
 
@@ -12,7 +12,7 @@ class PolynomialDecayScheduler(Scheduler):
     in the given total steps. When last_epoch=-1, sets initial lr as lr.
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.
@@ -66,7 +66,7 @@ class PolynomialLayerwiseDecayScheduler(Scheduler):
     key that should be defined in every group of parameters, along with the usual `weight_decay`.
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.
@@ -88,7 +88,7 @@ class PolynomialLayerwiseDecayScheduler(Scheduler):
             whether to extend decay steps when global step is higher.
     """
 
-    def __init__(self, hyperparameters: Namespace, optimizer: torch.optim.Optimizer, num_training_steps: int):
+    def __init__(self, hyperparameters: ExtendedNamespace, optimizer: torch.optim.Optimizer, num_training_steps: int):
         super().__init__(hyperparameters, optimizer, num_training_steps)
 
         # retrieve depth for each params group

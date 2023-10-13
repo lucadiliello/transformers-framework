@@ -1,4 +1,4 @@
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 from lightning_utilities.core.imports import RequirementCache
@@ -17,7 +17,7 @@ else:
 
 class FuseAdamOptimizer(Optimizer, FusedAdam):
 
-    def __init__(self, hyperparameters: Namespace, named_parameters: Generator):
+    def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator):
         r""" First hyperparameters argument to SuperOptimizer, other args for FusedAdam. """
 
         assert _DEEPSPEED_AVAILABLE, (

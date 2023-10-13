@@ -7,10 +7,10 @@ from transformers_framework.utilities.arguments import FlexibleArgumentParser, i
 class MaxSQRTDecayScheduler(Scheduler):
     r"""
     Create a schedule with a learning rate that descreses polynomially after the first `k` steps.
-    The lr function is `lr = 1 / sqrt(max(num_constant_steps, step))`
+    The lr function is `lr = 1 / sqrt(max(num_constant_steps, step) / steps)`
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.
@@ -19,7 +19,7 @@ class MaxSQRTDecayScheduler(Scheduler):
 
     Args through CLI:
         num_constant_steps (:obj:`int`):
-            The number of steps for the contant phase.
+            The number of steps for the constant phase.
         num_warmup_steps (:obj:`int`):
             The number of steps for the linear increasing phase.
     """
@@ -30,7 +30,7 @@ class MaxSQRTDecayScheduler(Scheduler):
         use_warmup = self.hyperparameters.num_warmup_steps is not None
         num_steps = (
             self.hyperparameters.num_warmup_steps
-            if self.hyperparameters.num_warmup_steps is not None
+            if use_warmup
             else self.hyperparameters.num_constant_steps
         )
 

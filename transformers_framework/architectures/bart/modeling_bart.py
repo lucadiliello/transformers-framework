@@ -3,7 +3,7 @@ from typing import Optional, Tuple, Union
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from transformers.models.bart.modeling_bart import BartModel, BartPretrainedModel, logger, shift_tokens_right
+from transformers.models.bart.modeling_bart import BartModel, BartPreTrainedModel, logger, shift_tokens_right
 
 from transformers_framework.architectures.bart.configuration_bart import BartMultiTokenConfig
 from transformers_framework.architectures.generation_utils import MultiTokenGenerationMixin
@@ -11,7 +11,7 @@ from transformers_framework.architectures.modeling_outputs import SeqToSeqLMOutp
 from transformers_framework.utilities import IGNORE_IDX
 
 
-class BartForMultiTokenConditionalGeneration(BartPretrainedModel, MultiTokenGenerationMixin):
+class BartForMultiTokenConditionalGeneration(BartPreTrainedModel, MultiTokenGenerationMixin):
 
     base_model_prefix = "model"
     _keys_to_ignore_on_load_missing = [r"final_logits_bias", r"lm_head.weight"]

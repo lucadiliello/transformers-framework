@@ -24,7 +24,7 @@ from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_retrieval_arguments
 from transformers_framework.utilities.losses import contrastive_loss, cosine_similarity_loss, online_contrastive_loss
 from transformers_framework.utilities.similarity import dot_product_similarity
-from transformers_framework.utilities.torch import logits_to_binary_prediction
+from transformers_framework.utilities.torch import logits_to_binary_predictions
 
 
 LOSS_FN_MAP = dict(
@@ -97,8 +97,8 @@ class RetrievalPipeline(Pipeline):
 
     def synchronize_tensor(self, _tensor: Tensor, sync_grads: bool = True) -> Tensor:
         r""" Synchronize tensor from all devices by concatenating along `batch` dimension. """
-        new_batch_size = self.trainer.world_size() * _tensor.shape[0]
-        _tensor = self.all_gather(_tensor, sync_grads=sync_grads).view(new_batch_size, _tensor.shape[1])
+        new_batch_size = self.trainer.world_size * _tensor.shape[0]
+        _tensor = self.all_gather(_tensor, sync_grads=sync_grads).view(new_batch_size, *_tensor.shape[1:])
         return _tensor
 
     def step(self, batch: Dict) -> RetrievalStepOutput:
@@ -124,14 +124,19 @@ class RetrievalPipeline(Pipeline):
         # compute scores before synchronizing between devices to avoid storing
         # metrics multiple times for each pair of embeddings
         scores = self.scores_fn(*embeddings)
-        preds = logits_to_binary_prediction(scores)
+        preds = logits_to_binary_predictions(scores)
 
         # computing the loss
         if self.hyperparameters.sync_devices:
-            embeddings = [
+            synced_embeddings = [
                 self.synchronize_tensor(embedding, sync_grads=True) for embedding in embeddings
             ]
-        loss = self.loss_function(*embeddings, labels=batch['retrieval_labels'])
+            synced_labels = self.synchronize_tensor(batch['retrieval_labels'], sync_grads=False)
+        else:
+            synced_embeddings = embeddings
+            synced_labels = batch['retrieval_labels']
+        
+        loss = self.loss_function(*synced_embeddings, labels=synced_labels)
 
         return RetrievalStepOutput(
             loss=loss,

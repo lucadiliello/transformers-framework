@@ -1,4 +1,4 @@
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
@@ -15,7 +15,7 @@ class Scheduler(_LRScheduler):
     `_LRScheduler` in the `torch` project.
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.
@@ -23,7 +23,7 @@ class Scheduler(_LRScheduler):
             The total number of training steps.
     """
 
-    def __init__(self, hyperparameters: Namespace, optimizer: Optimizer, num_training_steps: int):
+    def __init__(self, hyperparameters: ExtendedNamespace, optimizer: Optimizer, num_training_steps: int):
         self.hyperparameters = hyperparameters
         self.num_training_steps = num_training_steps
         super().__init__(optimizer, verbose=False)

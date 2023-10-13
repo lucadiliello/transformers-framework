@@ -1,5 +1,5 @@
-transformers==4.29.2
-lightning>=2.0.6
+transformers>=4.34
+lightning>=2.0.9
 torch>=2.0.1
 torchmetrics>=0.11.4,<1.0.0
 rich>=10.14

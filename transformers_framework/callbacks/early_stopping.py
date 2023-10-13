@@ -1,13 +1,12 @@
-from argparse import Namespace
-
 from lightning.pytorch.callbacks import EarlyStopping as _EarlyStopping
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 
 class EarlyStopping(_EarlyStopping):
 
-    def __init__(self, hyperparameters: Namespace):
+    def __init__(self, hyperparameters: ExtendedNamespace):
         if hyperparameters.monitor is None:
             raise ValueError("cannot use early_stopping without a monitored variable")
 

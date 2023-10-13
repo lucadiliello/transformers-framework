@@ -1,6 +1,6 @@
 import os
 import shutil
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Any, Dict, List
 
 from lightning.pytorch import LightningModule, Trainer
@@ -26,7 +26,7 @@ class TransformersModelCheckpointCallback(Callback):
     `--no_val_checkpointing`: Disable transformers checkpointing at each validation epoch end.
     """
 
-    def __init__(self, hyperparameters: Namespace, destination: str, *args, **kwargs):
+    def __init__(self, hyperparameters: ExtendedNamespace, destination: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hyperparameters = hyperparameters
         self.destination = destination

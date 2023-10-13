@@ -8,7 +8,7 @@ class LinearScheduler(Scheduler):
     a warmup period during which it increases linearly from 0 to the initial lr set in the optimizer.
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.

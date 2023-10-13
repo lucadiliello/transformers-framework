@@ -6,6 +6,8 @@ lightning_logs/
 
 # Utils
 transformers_framework/utils
+transformers_framework/architectures/simpleformer/
+*simpleformer*
 
 # Editor and OS stuff
 .vscode

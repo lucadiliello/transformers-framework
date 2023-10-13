@@ -1,4 +1,3 @@
-from argparse import Namespace
 from typing import Any, Dict, Generator, Iterable, List, Literal, Mapping, Tuple, Union
 
 import numpy as np
@@ -172,11 +171,6 @@ def special_zip(*iterators, stop: str = 'shortest') -> Iterable:
 def add_dict_to_attributes(obj: object, dictionary: Dict):
     for k, v in dictionary.items():
         setattr(obj, k, v)
-
-
-def remove_from_namespace(namespace: Namespace, keys: List[str]) -> Namespace:
-    r""" Remove a list of keys and return new Namespace. """
-    return Namespace(**{k: v for k, v in vars(namespace).items() if k not in keys})
 
 
 def multi_get_from_dict(dictionary, *keys, default: Any = None):

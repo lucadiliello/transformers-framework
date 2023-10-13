@@ -162,7 +162,7 @@ def clean_device_cache():
         torch.mps.empty_cache()
 
 
-def logits_to_binary_prediction(logits: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
+def logits_to_binary_predictions(logits: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
     r""" Receives a tensor of floats with shape (batch_size,) and return a
     tensor with the same shape and integers in [0, 1].
     Applies a sigmoid and a comparison with the threshold.

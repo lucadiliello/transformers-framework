@@ -1,4 +1,4 @@
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 from torch.optim import AdamW
@@ -9,7 +9,7 @@ from transformers_framework.utilities.arguments import FlexibleArgumentParser
 
 class AdamWOptimizer(Optimizer, AdamW):
 
-    def __init__(self, hyperparameters: Namespace, named_parameters: Generator):
+    def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator):
         r""" First hyperparameters argument to SuperOptimizer, other args for AdamW. """
         super().__init__(
             hyperparameters,

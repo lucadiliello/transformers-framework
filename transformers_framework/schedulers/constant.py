@@ -9,7 +9,7 @@ class ConstantScheduler(Scheduler):
 
 
     Args:
-        hyperparameters: (:class:`~argparse.Namespace`):
+        hyperparameters: (:class:`~argparse.ExtendedNamespace`):
             Collection of training hyperparameters.
         optimizer (:class:`~torch.optim.Optimizer`):
             The optimizer for which to schedule the learning rate.

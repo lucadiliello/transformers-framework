@@ -1,5 +1,5 @@
 import os
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Union
 
 import torch
@@ -11,7 +11,7 @@ from lightning.pytorch.strategies.strategy import Strategy
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
 
-def initialize_strategy(hyperparameters: Namespace) -> Union[Strategy, str]:
+def initialize_strategy(hyperparameters: ExtendedNamespace) -> Union[Strategy, str]:
     r""" Check if particular strategy is used and eventually instantiate directly. """
 
     # disable find unused parameters to improve performance
@@ -71,13 +71,13 @@ def initialize_strategy(hyperparameters: Namespace) -> Union[Strategy, str]:
     return hyperparameters.strategy
 
 
-def initialize_precision(hyperparameters: Namespace) -> Union[str, int]:
+def initialize_precision(hyperparameters: ExtendedNamespace) -> Union[str, int]:
     r""" Checks over precision and used model. """
 
     # no gradient clipping needed if running with fp16
-    if hyperparameters.precision == '16-mixed' and hyperparameters.gradient_clip_val:
+    if hyperparameters.precision in ('16-mixed', '16-true') and hyperparameters.gradient_clip_val:
         rank_zero_warn(
-            "There is no need to use `gradient_clip_val` with `precision=16-mixed` "
+            "There is no need to use `gradient_clip_val` with `precision=16-*` "
             "since gradients are scaled automatically before the optimization step."
         )
 
@@ -97,16 +97,19 @@ def initialize_precision(hyperparameters: Namespace) -> Union[str, int]:
         torch.backends.cudnn.allow_tf32 = allow_tf32
         torch.backends.cuda.matmul.allow_tf32 = allow_tf32
 
-    if 't5' in hyperparameters.model and hyperparameters.precision == '16-mixed' and (
-        'accelerator' not in hyperparameters or hyperparameters.accelerator != 'mps'
-    ):
-        rank_zero_warn("Precision set to 16 (FP16) but model is T5-like. Changing precision to bf16 for you.")
-        return 'bf16-mixed'
+    if 't5' in hyperparameters.model:
+        if hyperparameters.precision == '16-mixed' and hyperparameters.get('accelerator') != 'mps':
+            rank_zero_warn("Precision set to '16-mixed' but model is T5. Changing precision to 'bf16-mixed' for you.")
+            return 'bf16-mixed'
+
+        if hyperparameters.precision == '16-true' and hyperparameters.get('accelerator') != 'mps':
+            rank_zero_warn("Precision set to '16-true' but model is T5. Changing precision to 'bf16-true' for you.")
+            return 'bf16-true'
 
     return hyperparameters.precision
 
 
-def initialize_profiler(hyperparameters: Namespace) -> Union[str, Profiler]:
+def initialize_profiler(hyperparameters: ExtendedNamespace) -> Union[str, Profiler]:
     r""" Initialize profiler in the case advanced GPU checks are required. """
     if hyperparameters.profiler is None or hyperparameters.profiler != 'cpu_gpu_memory':
         return hyperparameters.profiler

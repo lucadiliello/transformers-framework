@@ -1,4 +1,4 @@
-from argparse import Action, ArgumentError, ArgumentParser, Namespace
+from argparse import Action, ArgumentError, ArgumentParser
 from typing import Any, Dict, Iterable, List, Union
 
 from lightning.pytorch.trainer.states import TrainerFn
@@ -463,7 +463,7 @@ def add_generation_arguments(parser: ArgumentParser):
     parser.add_argument('--generation_forced_decoder_ids', type=int, nargs='+', default=None, required=False)
 
 
-def get_generation_args_from_hyperparameters(hyperparameters: Namespace) -> Dict:
+def get_generation_args_from_hyperparameters(hyperparameters: ExtendedNamespace) -> Dict:
     r""" Just extract generation hyperparameters from namespace. """
     res = dict(
         min_length=hyperparameters.generation_min_length,
@@ -508,7 +508,7 @@ def get_generation_args_from_hyperparameters(hyperparameters: Namespace) -> Dict
 
 def add_trainer_args(parser: ArgumentParser):
     r""" Add to the argument parser all the training arguments regarding the hardware and the setup. """
-    allowed_prec = ('16-mixed', 'bf16-mixed', '32-true', '64-true')
+    allowed_prec = ('16-mixed', '16-true', 'bf16-mixed', 'bf16-true', '32-true', '64-true')
 
     parser.add_argument('--accelerator', type=str, default="auto", required=False)
     parser.add_argument('--strategy', type=str, default="auto", required=False)

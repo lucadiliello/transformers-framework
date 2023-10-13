@@ -1,5 +1,4 @@
 import os
-from argparse import Namespace
 from typing import Any, List
 
 import lightning.pytorch as pl
@@ -7,6 +6,7 @@ import torch
 from datasets import Dataset
 from lightning.pytorch.callbacks.prediction_writer import BasePredictionWriter
 from lightning_fabric.utilities.rank_zero import rank_zero_only
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 from transformers_framework.utilities.distributed import sync_data_distributed
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
@@ -14,7 +14,7 @@ from transformers_framework.utilities.logging import rank_zero_info, rank_zero_w
 
 class PredictionsWriter(BasePredictionWriter):
 
-    def __init__(self, hyperparameters: Namespace, destination: str):
+    def __init__(self, hyperparameters: ExtendedNamespace, destination: str):
         super().__init__(write_interval='epoch')
         self.destination = destination
         self.hyperparameters = hyperparameters

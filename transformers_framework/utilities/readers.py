@@ -1,6 +1,6 @@
 import json
 import os
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Dict, Generator, Iterable, Union
 
 import torch
@@ -9,7 +9,7 @@ import yaml
 from transformers_framework.utilities.logging import rank_zero_warn
 
 
-def load_yaml(filename: str, to_namespace: bool = True) -> Union[Dict, Namespace]:
+def load_yaml(filename: str, to_namespace: bool = True) -> Union[Dict, ExtendedNamespace]:
     r"""
     Load a yaml file from disk
     """
@@ -17,11 +17,11 @@ def load_yaml(filename: str, to_namespace: bool = True) -> Union[Dict, Namespace
     with open(filename, 'r') as infile:
         res = yaml.safe_load(infile.read())
     if to_namespace:
-        return Namespace(**res)
+        return ExtendedNamespace(**res)
     return res
 
 
-def load_json(filename: str, to_namespace: bool = True) -> Union[Dict, Namespace]:
+def load_json(filename: str, to_namespace: bool = True) -> Union[Dict, ExtendedNamespace]:
     r"""
     Load config from json file from disk
     """
@@ -29,7 +29,7 @@ def load_json(filename: str, to_namespace: bool = True) -> Union[Dict, Namespace
     with open(filename, 'r') as infile:
         res = json.load(infile)
     if to_namespace:
-        return Namespace(**res)
+        return ExtendedNamespace(**res)
     return res
 
 

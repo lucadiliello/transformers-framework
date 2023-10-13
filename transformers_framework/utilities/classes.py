@@ -28,6 +28,11 @@ class ExtendedNamespace(Namespace):
     def __contains__(self, key):
         return key in self.__dict__
 
+    def get(self, key, default = None):
+        if key not in self:
+            return default
+        return self[key]
+
     def __getitem__(self, key):
         return self.__dict__[key]
 

@@ -1,4 +1,4 @@
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
@@ -9,7 +9,7 @@ class Optimizer:
     r""" High level interface for optimizers to be used with transformers.
     Adds methods to define hyperparameters from the command line. """
 
-    def __init__(self, hyperparameters: Namespace, named_parameters: Generator, *args, **kwargs):
+    def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator, *args, **kwargs):
         r""" First argument should always be the hyperparameters namespace, other arguments are
         optimizer-specific. """
         grouped_parameters = get_parameters_grouped_for_weight_decay(

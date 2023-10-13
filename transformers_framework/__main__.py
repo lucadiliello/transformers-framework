@@ -57,7 +57,7 @@ def main(hyperparameters: ExtendedNamespace):
     )
     rank_zero_info(
         f"Running on\n"
-        f"  - transformers_framework={__version__}\n"
+        f"  - transformers-framework={__version__}\n"
         f"  - torch={torch.__version__}\n"
         f"  - transformers={transformers.__version__}\n"
         f"  - pytorch-lightning={pl.__version__}\n"
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         EarlyStopping.add_argparse_args(parser)
     TransformersModelCheckpointCallback.add_argparse_args(parser)
 
-    # get NameSpace of parameters
+    # get ExtendedNameSpace of parameters
     args = parser.parse_args()
     args = ExtendedNamespace.from_namespace(args)
     main(args)

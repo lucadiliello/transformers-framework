@@ -1,6 +1,5 @@
 import os
 import pickle
-from argparse import Namespace
 from typing import Any, Dict, List
 
 import numpy as np
@@ -10,6 +9,8 @@ from lightning.pytorch.callbacks.callback import Callback
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 from transformers_framework.utilities.logging import rank_zero_only, rank_zero_warn
+
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 
 ADDITIONAL_DATA_DIR = "additional"
@@ -24,7 +25,7 @@ class AdditionalDataCallback(Callback):
         A None value means save only at the end of each training epoch.
     """
 
-    def __init__(self, hyperparameters: Namespace, attribute_name: str, *args, **kwargs):
+    def __init__(self, hyperparameters: ExtendedNamespace, attribute_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hyperparameters = hyperparameters
         self.destination = os.path.join(hyperparameters.output_dir, ADDITIONAL_DATA_DIR, hyperparameters.name)

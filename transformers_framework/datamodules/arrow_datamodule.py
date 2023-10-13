@@ -1,6 +1,6 @@
 import os
 import shutil
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from multiprocessing import cpu_count
 
 import numpy as np
@@ -74,7 +74,7 @@ class ArrowDataModule(LightningDataModule):
 
     # ######################## main methods ####################
 
-    def __init__(self, hyperparameters: Namespace, trainer: Trainer, model: Pipeline):
+    def __init__(self, hyperparameters: ExtendedNamespace, trainer: Trainer, model: Pipeline):
         super().__init__()
         self.hyperparameters = hyperparameters
         self.trainer = trainer

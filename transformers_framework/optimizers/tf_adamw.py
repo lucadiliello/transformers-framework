@@ -1,4 +1,4 @@
-from argparse import Namespace
+from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 import torch
@@ -90,7 +90,7 @@ class TFAdamW(AdamW):
 
 class TFAdamWOptimizer(Optimizer, TFAdamW):
 
-    def __init__(self, hyperparameters: Namespace, named_parameters: Generator):
+    def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator):
         r""" First hyperparameters argument to SuperOptimizer, other args for Adafactor. """
         super().__init__(
             hyperparameters,

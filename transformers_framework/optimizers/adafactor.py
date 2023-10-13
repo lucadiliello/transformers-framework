@@ -1,5 +1,5 @@
-from argparse import Namespace
 from typing import Generator
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 from transformers.optimization import Adafactor
 
@@ -9,7 +9,7 @@ from transformers_framework.utilities.arguments import FlexibleArgumentParser
 
 class AdafactorOptimizer(Optimizer, Adafactor):
 
-    def __init__(self, hyperparameters: Namespace, named_parameters: Generator):
+    def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator):
         r""" First hyperparameters argument to SuperOptimizer, other args for Adafactor. """
         super().__init__(
             hyperparameters,
