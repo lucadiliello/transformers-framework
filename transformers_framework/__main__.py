@@ -29,6 +29,7 @@ from transformers_framework.utilities.arguments import (
 )
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
+from lightning.pytorch.callbacks import DeviceStatsMonitor
 
 
 # too much complains of the tokenizers
@@ -134,6 +135,10 @@ def main(hyperparameters: ExtendedNamespace):
     if hyperparameters.stochastic_weight_averaging:
         callbacks.append(StochasticWeightAveraging(swa_lrs=hyperparameters.learning_rate * 100, swa_epoch_start=0.75))
 
+    # add devices usage track callback
+    if hyperparameters.devices_stats:
+        callbacks.append(DeviceStatsMonitor())
+
     # add callback for predictions
     callbacks.append(PredictionsWriter(hyperparameters, destination=predictions_path))
 
@@ -220,13 +225,16 @@ if __name__ == '__main__':
     )
 
     # checkpointing
-    parser.add_argument('--ckpt_path', type=str, default=None, help="Restore from checkpoint.", required=False)
+    parser.add_argument('--ckpt_path', type=str, default=None, help="Restore from checkpoint", required=False)
 
     # SWA
     parser.add_argument('--stochastic_weight_averaging', action="store_true", help="Activate SWA")
 
     # Dynamo suppress errors
     parser.add_argument('--dynamo_fallback_eager', action="store_true", help="Suppress dynamo errors")
+
+    # track devices usage
+    parser.add_argument('--devices_stats', action='store_true', help="Track devices usage")
 
     # add all the important trainer options to argparse
     # ie: now --devices --num_nodes ... --fast_dev_run all work in the cli
