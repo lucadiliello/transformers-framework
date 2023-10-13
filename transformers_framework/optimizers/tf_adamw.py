@@ -1,4 +1,3 @@
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 import torch
@@ -6,6 +5,7 @@ from torch.optim import AdamW
 
 from transformers_framework.optimizers.optimizer import Optimizer
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 
 class TFAdamW(AdamW):

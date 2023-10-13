@@ -1,12 +1,12 @@
 import os
 import shutil
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Any, Dict, List
 
 from lightning.pytorch import LightningModule, Trainer
 from lightning.pytorch.callbacks.callback import Callback
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.inspectors import is_simple_object
 from transformers_framework.utilities.logging import rank_zero_warn
 from transformers_framework.utilities.readers import dump_json

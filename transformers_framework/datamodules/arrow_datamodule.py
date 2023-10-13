@@ -1,6 +1,5 @@
 import os
 import shutil
-from transformers_framework.utilities.classes import ExtendedNamespace
 from multiprocessing import cpu_count
 
 import numpy as np
@@ -15,6 +14,7 @@ from transformers_framework.datasets.iterable_dataset import IterableDataset
 from transformers_framework.datasets.map_dataset import MapDataset
 from transformers_framework.pipelines.pipeline.pipeline import Pipeline
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.datamodules import TrainerFn_to_Names
 from transformers_framework.utilities.datasets import load_dataset_from_anywhere
 from transformers_framework.utilities.hash import hash_function, hash_string

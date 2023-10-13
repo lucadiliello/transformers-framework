@@ -1,7 +1,7 @@
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.optimizers import get_parameters_grouped_for_weight_decay
 
 

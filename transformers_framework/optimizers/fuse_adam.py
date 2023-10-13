@@ -1,10 +1,10 @@
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Generator
 
 from lightning_utilities.core.imports import RequirementCache
 
 from transformers_framework.optimizers.optimizer import Optimizer
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.strategy import check_strategy
 
 

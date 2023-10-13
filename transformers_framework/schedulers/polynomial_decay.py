@@ -1,10 +1,10 @@
 import math
-from transformers_framework.utilities.classes import ExtendedNamespace
 
 import torch
 
 from transformers_framework.schedulers.scheduler import Scheduler
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, float_non_negative, int_non_negative
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 
 class PolynomialDecayScheduler(Scheduler):

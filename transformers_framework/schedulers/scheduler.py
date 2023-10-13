@@ -1,9 +1,8 @@
-from transformers_framework.utilities.classes import ExtendedNamespace
-
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_warn
 
 

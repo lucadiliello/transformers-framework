@@ -1,14 +1,14 @@
 import os
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Union
 
 import torch
+from lightning.pytorch.plugins import BitsandbytesPrecisionPlugin
 from lightning.pytorch.profilers.profiler import Profiler
 from lightning.pytorch.profilers.pytorch import PyTorchProfiler
 from lightning.pytorch.strategies.ddp import DDPStrategy
 from lightning.pytorch.strategies.strategy import Strategy
-from lightning.pytorch.plugins import BitsandbytesPrecisionPlugin
 
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
 
 

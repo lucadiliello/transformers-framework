@@ -1,10 +1,10 @@
 from typing import Generator
-from transformers_framework.utilities.classes import ExtendedNamespace
 
 from transformers.optimization import Adafactor
 
 from transformers_framework.optimizers.optimizer import Optimizer
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
+from transformers_framework.utilities.classes import ExtendedNamespace
 
 
 class AdafactorOptimizer(Optimizer, Adafactor):

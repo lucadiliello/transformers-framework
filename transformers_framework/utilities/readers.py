@@ -1,11 +1,11 @@
 import json
 import os
-from transformers_framework.utilities.classes import ExtendedNamespace
 from typing import Dict, Generator, Iterable, Union
 
 import torch
 import yaml
 
+from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_warn
 
 

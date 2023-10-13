@@ -8,6 +8,7 @@ import torchmetrics
 import transformers
 from lightning.pytorch import seed_everything
 from lightning.pytorch.callbacks import (
+    DeviceStatsMonitor,
     LearningRateMonitor,
     ModelCheckpoint,
     RichModelSummary,
@@ -29,7 +30,6 @@ from transformers_framework.utilities.arguments import (
 )
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
-from lightning.pytorch.callbacks import DeviceStatsMonitor
 
 
 # too much complains of the tokenizers
