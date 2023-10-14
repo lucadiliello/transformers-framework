@@ -14,7 +14,7 @@ from transformers_framework.interfaces.logging import (
 )
 from transformers_framework.interfaces.step import TokenDetectionStepOutput
 from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import random_token_detection_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_random_token_detection_arguments

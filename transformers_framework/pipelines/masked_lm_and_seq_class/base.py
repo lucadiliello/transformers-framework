@@ -16,7 +16,7 @@ from transformers_framework.interfaces.logging import (
 )
 from transformers_framework.interfaces.step import MaskedLMAndSeqClassStepOutput
 from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import ExtendedPipeline
+from transformers_framework.pipelines.pipeline import ExtendedPipeline
 from transformers_framework.processing.postprocessors import masked_lm_and_seq_class_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import (
@@ -57,15 +57,9 @@ class MaskedLMAndSeqClassPipeline(ExtendedPipeline):
         self.test_acc = MulticlassAccuracy(*metrics_args, **metrics_kwargs)
         self.test_f1 = MulticlassF1Score(*metrics_args, **metrics_kwargs)
 
-    def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
-
-    def requires_extended_model(self):
-        return self.hyperparameters.k is not None
-
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         kwargs['num_labels'] = self.hyperparameters.num_labels
-        return super().configure_config(**kwargs)
+        return super().setup_config(**kwargs)
 
     def step(self, batch: Dict) -> MaskedLMAndSeqClassStepOutput:
         r""" Forward step is shared between all train/val/test steps. """

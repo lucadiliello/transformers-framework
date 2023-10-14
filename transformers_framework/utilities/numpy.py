@@ -4,8 +4,9 @@ import numpy as np
 import numpy.typing as npt
 import scipy
 import torch
-from lightning_fabric.utilities.distributed import _distributed_available
 from numba import njit
+
+from transformers_framework.utilities.distributed import distributed_initialized
 
 
 def numpy_num_elements(array: npt.NDArray) -> int:
@@ -16,7 +17,7 @@ def numpy_num_elements(array: npt.NDArray) -> int:
 def get_rank_and_workers_dependend_seeds() -> List[int]:
     r""" Compute two seeds dependens on rank of this process and eventually also the worker id. """
     seeds = []
-    if _distributed_available():
+    if distributed_initialized():
         seeds.append(torch.distributed.get_rank())
     else:
         seeds.append(0)

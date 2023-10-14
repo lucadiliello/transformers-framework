@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline random_token_detection \
     --model bert \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

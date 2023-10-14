@@ -20,7 +20,7 @@ from transformers_framework.interfaces.step import SeqToSeqGenStepOutput, SeqToS
 from transformers_framework.metrics.bert_score import BERTScore
 from transformers_framework.metrics.bleurt import BLEURT
 from transformers_framework.metrics.rouge import ROUGEScore
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import summarization_processor
 from transformers_framework.utilities.arguments import (
     FlexibleArgumentParser,

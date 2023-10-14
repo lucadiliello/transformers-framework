@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Union
 
 import torch
 from torchmetrics.classification.accuracy import MulticlassAccuracy
@@ -19,7 +20,7 @@ from transformers_framework.interfaces.logging import (
 )
 from transformers_framework.interfaces.step import MaskedLMAndTokenDetectionStepOutput
 from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import masked_lm_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import (
@@ -32,7 +33,7 @@ from transformers_framework.utilities.logging import rank_zero_warn
 from transformers_framework.utilities.torch import combine_losses
 
 
-class TokenDetectionAndMaskedLMPipeline(Pipeline):
+class TokenDetectionAndMaskedLMPipeline(Pipeline, ABC):
 
     GENERATOR_MODEL_CLASS: PreTrainedModel
     POST_FORWARD_ADAPTER = token_detection_adaptation
@@ -40,9 +41,9 @@ class TokenDetectionAndMaskedLMPipeline(Pipeline):
         ('input_ids', 'original_input_ids', 'attention_mask', 'token_type_ids', 'masked_lm_labels')
     ]
 
-    def get_generator_config(self, config: PretrainedConfig, **kwargs):
+    @abstractmethod
+    def get_generator_config_parameters(self, config: PretrainedConfig, generator_size: float = 1 / 2) -> Dict:
         r""" Return config for the generator. """
-        raise NotImplementedError("This method should be implemented by subclasses")
 
     def __init__(self, hyperparameters):
         super().__init__(hyperparameters)
@@ -79,39 +80,49 @@ class TokenDetectionAndMaskedLMPipeline(Pipeline):
     def tie_weights(self):
         r""" Do every sort of weight tying here. """
 
-    def configure_config(self) -> PretrainedConfig:
-        kwargs = dict()
+    def fix_pre_trained_paths(self):
+        r""" Fix pre-training paths of models. """
+        super().fix_pre_trained_paths()
+
+        if self.hyperparameters.pre_trained_generator_config is None:
+            self.hyperparameters.pre_trained_generator_config = self.hyperparameters.pre_trained_generator_model
+            rank_zero_warn('Found None `pre_trained_generator_config`, setting equal to `pre_trained_generator_model`')
+
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+        r""" Setup discriminator and generator configs. """
 
         # discriminator config
-        config = self.CONFIG_CLASS.from_pretrained(self.hyperparameters.pre_trained_config, **kwargs)
+        config = super().setup_config(pre_trained_config=self.hyperparameters.pre_trained_config, **kwargs)
 
         # generator config
-        if self.hyperparameters.pre_trained_generator_config is not None:
-            generator_config = self.CONFIG_CLASS.from_pretrained(
-                self.hyperparameters.pre_trained_generator_config, **kwargs
+        generator_kwargs = {**kwargs}
+        if self.hyperparameters.pre_trained_generator_config is None:
+            generator_kwargs.update(
+                self.get_generator_config_parameters(config, generator_size=self.hyperparameters.generator_size)
             )
-        elif self.hyperparameters.pre_trained_generator_model is not None:
-            rank_zero_warn(
-                'Found None `pre_trained_generator_config`, setting equal to `pre_trained_generator_model`'
-            )
-            self.hyperparameters.pre_trained_generator_config = self.hyperparameters.pre_trained_generator_model
-            generator_config = self.CONFIG_CLASS.from_pretrained(
-                self.hyperparameters.pre_trained_generator_config, **kwargs
-            )
-        else:
-            rank_zero_warn(
-                f"Automatically creating generator config of size {self.hyperparameters.generator_size}"
-            )
-            generator_config = self.get_generator_config(config, **kwargs)
+
+        generator_config = super().setup_config(
+            pre_trained_config=self.hyperparameters.pre_trained_generator_config, **generator_kwargs
+        )
 
         return {'config': config, 'generator_config': generator_config}
 
-    def configure_model(self, config: PretrainedConfig) -> PreTrainedModel:
+    def setup_model(self, **kwargs) -> Union[PreTrainedModel, Dict[str, PreTrainedModel]]:
         r""" Configure models. """
-        generator = self.load_model(
-            self.GENERATOR_MODEL_CLASS, self.hyperparameters.pre_trained_generator_model, config=self.generator_config
+        generator = super().setup_model(
+            config=self.generator_config,
+            model_class=self.GENERATOR_MODEL_CLASS,
+            pre_trained_model=self.hyperparameters.pre_trained_generator_model,
+            **kwargs,
         )
-        model = self.load_model(self.MODEL_CLASS, self.hyperparameters.pre_trained_model, config=config)
+
+        model = super().setup_model(
+            config=self.config,
+            model_class=self.MODEL_CLASS,
+            pre_trained_model=self.hyperparameters.pre_trained_model,
+            **kwargs,
+        )
+
         return {'generator': generator, 'model': model}
 
     def step(self, batch: Dict) -> MaskedLMAndTokenDetectionStepOutput:

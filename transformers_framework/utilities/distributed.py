@@ -1,7 +1,14 @@
 from typing import Any, List
 
 import torch
-from lightning_fabric.utilities.distributed import _distributed_available as distributed_available
+
+
+def distributed_available() -> bool:
+    return torch.distributed.is_available()
+
+
+def distributed_initialized() -> bool:
+    return torch.distributed.is_initialized()
 
 
 def sync_data_distributed(obj: Any, group: int = None, concat: bool = False) -> List[Any]:

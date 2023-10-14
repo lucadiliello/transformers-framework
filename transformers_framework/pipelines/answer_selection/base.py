@@ -28,7 +28,7 @@ from transformers_framework.interfaces.logging import (
     SEQ_CLASS_LOSS,
 )
 from transformers_framework.interfaces.step import AnswerSelectionStepOutput
-from transformers_framework.pipelines.pipeline.pipeline import ExtendedPipeline
+from transformers_framework.pipelines.pipeline import ExtendedPipeline
 from transformers_framework.processing.postprocessors import answer_selection_processor
 from transformers_framework.processing.preprocessors import answer_selection_grouping
 from transformers_framework.utilities import IGNORE_IDX
@@ -46,7 +46,7 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         super().__init__(hyperparameters)
 
         # check that when grouping is random, reload_dataloaders_every_n_epochs is 1
-        if self.hyperparameters.k is not None:
+        if self.requires_extended_model:
             if self.hyperparameters.grouping == 'random' and not self.hyperparameters.reload_train_dataset_every_epoch:
                 raise ValueError("You must specify `reload_dataloaders_every_n_epochs=1` when using `grouping=random`")
 
@@ -68,8 +68,8 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         self.valid_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.valid_map = RetrievalMAP(**metrics_kwargs)
         self.valid_mrr = RetrievalMRR(**metrics_kwargs)
-        self.valid_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
-        self.valid_hr5 = RetrievalHitRate(k=5, **metrics_kwargs)
+        self.valid_p1 = RetrievalPrecision(top_k=1, **metrics_kwargs)
+        self.valid_hr5 = RetrievalHitRate(top_k=5, **metrics_kwargs)
         self.valid_ndgc = RetrievalNormalizedDCG(**metrics_kwargs)
 
         # test metrics
@@ -77,27 +77,19 @@ class AnswerSelectionPipeline(ExtendedPipeline):
         self.test_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.test_map = RetrievalMAP(**metrics_kwargs)
         self.test_mrr = RetrievalMRR(**metrics_kwargs)
-        self.test_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
-        self.test_hr5 = RetrievalHitRate(k=5, **metrics_kwargs)
+        self.test_p1 = RetrievalPrecision(top_k=1, **metrics_kwargs)
+        self.test_hr5 = RetrievalHitRate(top_k=5, **metrics_kwargs)
         self.test_ndgc = RetrievalNormalizedDCG(**metrics_kwargs)
 
-        if self.hyperparameters.k is not None:
+        if self.requires_extended_model:
             self.preprocess = MethodType(preprocess, self)
 
         if self.hyperparameters.separated:
             self.MODEL_INPUT_NAMES_TO_REDUCE = None  # do not shrink batches when using separated mode (joint models)
 
-    def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
-
-    def requires_extended_model(self):
-        return self.hyperparameters.k is not None
-
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         kwargs['num_labels'] = 2  # always 2 classes for answer selection
-        if self.hyperparameters.k is not None:
-            kwargs['k'] = self.hyperparameters.k
-        return super().configure_config(**kwargs)
+        return super().setup_config(**kwargs)
 
     def step(self, batch: Dict) -> AnswerSelectionStepOutput:
         r""" Forward step is shared between all train/val/test steps. """

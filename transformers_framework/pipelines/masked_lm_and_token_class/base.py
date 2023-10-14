@@ -18,7 +18,7 @@ from transformers_framework.interfaces.logging import (
 )
 from transformers_framework.interfaces.step import MaskedLMAndTokenClassStepOutput
 from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import masked_lm_and_token_class_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import (
@@ -67,12 +67,12 @@ class MaskedLMAndTokenClass(Pipeline):
         self.test_acc = MulticlassAccuracy(**metrics_kwargs)
         self.test_f1 = MulticlassF1Score(**metrics_kwargs)
 
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         kwargs['num_labels'] = self.hyperparameters.num_labels
-        return super().configure_config(**kwargs)
+        return super().setup_config(**kwargs)
 
-    def configure_tokenizer(self) -> PreTrainedTokenizerBase:
-        return super().configure_tokenizer(add_prefix_space=True)
+    def setup_tokenizer(self) -> PreTrainedTokenizerBase:
+        return super().setup_tokenizer(add_prefix_space=True)
 
     def step(self, batch: Dict) -> MaskedLMAndTokenClassStepOutput:
         r""" Forward step is shared between all train/val/test steps. """

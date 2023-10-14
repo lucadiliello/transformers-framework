@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import torch
 
-from transformers_framework.callbacks.save_additional_data import AdditionalDataCallback
+from transformers_framework.callbacks.save_additional_data import SaveDataCallback
 from transformers_framework.interfaces.logging import (
     LOSS,
     TOKEN_DETECTION_ACCURACY,
@@ -37,7 +37,7 @@ class ClusterRandomTokenDetectionPipeline(RandomTokenDetectionPipeline):
         self.update_references()
 
     def configure_callbacks(self):
-        return AdditionalDataCallback(self.hyperparameters, 'counts')
+        return SaveDataCallback(self.hyperparameters, 'counts')
 
     def update_references(self):
         self.token_to_cluster_map_numpy = self.token_to_cluster_map.cpu().detach().numpy()
@@ -156,4 +156,4 @@ class ClusterRandomTokenDetectionPipeline(RandomTokenDetectionPipeline):
         parser.add_argument('--beta', default=2.0, required=False, type=float)
         parser.add_argument('--update_only_on_predictions', action="store_true")
         parser.add_argument('--clusters_filename', type=str, required=True)
-        AdditionalDataCallback.add_argparse_args(parser)  # add arguments from callback
+        SaveDataCallback.add_argparse_args(parser)  # add arguments from callback

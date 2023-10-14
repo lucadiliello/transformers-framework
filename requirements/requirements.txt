@@ -1,7 +1,8 @@
-transformers>=4.34.4
+transformers>=4.34.0
 lightning>=2.1.0
+pytorch-lightning>=2.1.0
 torch>=2.1.0
-torchmetrics>=0.11.4,<1.0.0
+torchmetrics>=1.2.0
 rich>=10.14
 datasets>=2.14.0
 scipy>=1.7.3

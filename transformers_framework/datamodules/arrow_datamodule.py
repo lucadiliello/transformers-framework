@@ -1,6 +1,7 @@
 import os
 import shutil
 from multiprocessing import cpu_count
+from typing import Dict
 
 import numpy as np
 import torch
@@ -12,7 +13,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from transformers_framework.datasets.iterable_dataset import IterableDataset
 from transformers_framework.datasets.map_dataset import MapDataset
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.datamodules import TrainerFn_to_Names
@@ -40,36 +41,36 @@ class ArrowDataModule(LightningDataModule):
 
     # ######################## should perform stage ####################
 
-    def do_train(self):
+    def do_train(self) -> bool:
         return self.hyperparameters[f'{TrainerFn_to_Names[TrainerFn.FITTING]}_dataset'] is not None
 
-    def do_validation(self):
+    def do_validation(self) -> bool:
         return self.hyperparameters[f'{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset'] is not None
 
-    def do_test(self):
+    def do_test(self) -> bool:
         return self.hyperparameters[f'{TrainerFn_to_Names[TrainerFn.TESTING]}_dataset'] is not None
 
-    def do_predict(self):
+    def do_predict(self) -> bool:
         return self.hyperparameters[f'{TrainerFn_to_Names[TrainerFn.PREDICTING]}_dataset'] is not None
 
-    def do_stage(self, stage: TrainerFn):
+    def do_stage(self, stage: TrainerFn) -> bool:
         return self.hyperparameters[f'{TrainerFn_to_Names[stage]}_dataset'] is not None
 
     # ######################## should reload data for stage ####################
 
-    def do_reload_train_every_epoch(self):
+    def do_reload_train_every_epoch(self) -> bool:
         return self.hyperparameters[f'reload_{TrainerFn_to_Names[TrainerFn.FITTING]}_dataset_every_epoch']
 
-    def do_reload_val_every_epoch(self):
+    def do_reload_val_every_epoch(self) -> bool:
         return self.hyperparameters[f'reload_{TrainerFn_to_Names[TrainerFn.VALIDATING]}_dataset_every_epoch']
 
-    def do_reload_test_every_epoch(self):
+    def do_reload_test_every_epoch(self) -> bool:
         return self.hyperparameters[f'reload_{TrainerFn_to_Names[TrainerFn.TESTING]}_dataset_every_epoch']
 
-    def do_reload_predict_every_epoch(self):
+    def do_reload_predict_every_epoch(self) -> bool:
         return self.hyperparameters[f'reload_{TrainerFn_to_Names[TrainerFn.PREDICTING]}_dataset_every_epoch']
 
-    def do_reload_stage_every_epoch(self, stage: TrainerFn):
+    def do_reload_stage_every_epoch(self, stage: TrainerFn) -> bool:
         return self.hyperparameters[f'reload_{TrainerFn_to_Names[stage]}_dataset_every_epoch']
 
     # ######################## main methods ####################
@@ -112,7 +113,7 @@ class ArrowDataModule(LightningDataModule):
             rank_zero_warn(f"Cleaning up temporary directory {main_path}")
             shutil.rmtree(main_path, ignore_errors=True)
 
-    def rank_should_prepare_data(self):
+    def rank_should_prepare_data(self) -> bool:
         r""" Guard to run code only on local/global (based on prepare_data_per_node) rank in distributed setting. """
         if dist.is_available() and dist.is_initialized():
             if self.prepare_data_per_node:
@@ -135,7 +136,7 @@ class ArrowDataModule(LightningDataModule):
         main_path = self.get_temporary_directory()
         dataset_path = TrainerFn_to_Names[stage]
         if self.do_reload_stage_every_epoch(stage):
-            dataset_path += f"_epoch{self.trainer.current_epoch}"
+            dataset_path += f"_epoch_{self.trainer.current_epoch}"
         return os.path.join(main_path, dataset_path)
 
     def preprocessing(self, stage: TrainerFn):
@@ -165,7 +166,7 @@ class ArrowDataModule(LightningDataModule):
                         batch_size=self.hyperparameters.prepare_data_batch_size,
                         load_from_cache_file=not self.hyperparameters.prepare_data_do_not_use_cache,
                     )
-                    rank_zero_info(f"Saving preprocessed dataset to {save_path}")
+                    rank_zero_info(f"Saving preprocessed dataset at {save_path}")
                     dataset.save_to_disk(save_path)
                 else:
                     rank_zero_info(f"Reusing already preprocessed dataset for stage {stage_name}")
@@ -173,7 +174,7 @@ class ArrowDataModule(LightningDataModule):
         # wait for all processes to have reached this point to avoid early loading of datasets not yet created
         self.trainer.strategy.barrier()
 
-    def load_dataset(self, stage: TrainerFn):
+    def load_dataset(self, stage: TrainerFn) -> Dataset:
         r""" Load a dataset given the stage name. """
         rank_zero_info(f"Loading {stage.value} dataset...")
 
@@ -200,7 +201,7 @@ class ArrowDataModule(LightningDataModule):
         dataset = (IterableDataset if self.hyperparameters.iterable else MapDataset)(dataset)
         return dataset
 
-    def default_dataloader(self, dataset: Dataset, shuffle: bool = False, batch_size: int = None):
+    def default_dataloader(self, dataset: Dataset, shuffle: bool = False, batch_size: int = None) -> DataLoader:
         r""" Return a dataloader with all usual default parameters. """
 
         if self.hyperparameters.iterable and shuffle:
@@ -221,7 +222,7 @@ class ArrowDataModule(LightningDataModule):
             ),
         )
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         r""" Return the training dataloader. """
         if not self.do_train():
             return None
@@ -229,7 +230,7 @@ class ArrowDataModule(LightningDataModule):
         self.train_dataset = self.load_dataset(TrainerFn.FITTING)
         return self.default_dataloader(self.train_dataset, shuffle=not self.hyperparameters.iterable)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         r""" Return the validation dataloader. """
         if not self.do_validation():
             return None
@@ -239,7 +240,7 @@ class ArrowDataModule(LightningDataModule):
             self.valid_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
         )
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         r""" Return the test dataloader. """
         if not self.do_test():
             return None
@@ -249,7 +250,7 @@ class ArrowDataModule(LightningDataModule):
             self.test_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
         )
 
-    def predict_dataloader(self):
+    def predict_dataloader(self) -> DataLoader:
         r""" Return the predict dataloader. """
         if not self.do_predict():
             return None
@@ -259,7 +260,7 @@ class ArrowDataModule(LightningDataModule):
             self.predict_dataset, shuffle=False, batch_size=self.hyperparameters.eval_batch_size
         )
 
-    def transfer_batch_to_device(self, batch, device: torch.device, dataloader_idx: int):
+    def transfer_batch_to_device(self, batch, device: torch.device, dataloader_idx: int) -> Dict:
         r""" Transfer batch to device. """
         if isinstance(device, str):
             device = torch.device(device)
@@ -287,7 +288,7 @@ class ArrowDataModule(LightningDataModule):
         parser.add_argument(
             '--prepare_data_per_node',
             action="store_true",
-            help="Preprocess data only on rank 0 node 0 (shared FS).",
+            help="Preprocess data for every machine in the distributed setting.",
         )
         parser.add_argument(
             '--prepare_data_workers',

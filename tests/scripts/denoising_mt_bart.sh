@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline denoising \
     --model multi_token_bart \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Union
 
 import torch
@@ -21,7 +22,7 @@ from transformers_framework.interfaces.logging import (  # MASKED_LM_PERPLEXITY,
 )
 from transformers_framework.interfaces.step import MaskedLMAndTokenDetectionAndSeqClassStepOutput, SeqClassStepOutput
 # from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import ExtendedPipeline
+from transformers_framework.pipelines.pipeline import ExtendedPipeline
 from transformers_framework.processing.postprocessors import masked_lm_and_seq_class_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import (
@@ -36,7 +37,7 @@ from transformers_framework.utilities.logging import rank_zero_warn
 from transformers_framework.utilities.torch import combine_losses
 
 
-class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
+class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline, ABC):
 
     GENERATOR_MODEL_CLASS: PreTrainedModel
     POST_FORWARD_ADAPTER = None
@@ -44,9 +45,9 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
         ('input_ids', 'original_input_ids', 'attention_mask', 'token_type_ids', 'masked_lm_labels')
     ]
 
-    def get_generator_config(self, config: PretrainedConfig):
+    @abstractmethod
+    def get_generator_config_parameters(self, config: PretrainedConfig, generator_size: float = 1 / 2):
         r""" Return config for the generator. """
-        raise NotImplementedError("This method should be implemented by subclasses")
 
     def __init__(self, hyperparameters):
         super().__init__(hyperparameters)
@@ -81,57 +82,57 @@ class TokenDetectionAndMaskedLMAndSeqClassPipeline(ExtendedPipeline):
     def tie_weights(self):
         r""" Do every sort of weight tying here. """
 
-    def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2 or self.hyperparameters.extended_token_type_ids is not None
+    def fix_pre_trained_paths(self):
+        r""" Fix pre-training paths of models. """
+        super().fix_pre_trained_paths()
 
-    def requires_extended_model(self):
-        return self.hyperparameters.k is not None
+        if self.hyperparameters.pre_trained_generator_config is None:
+            self.hyperparameters.pre_trained_generator_config = self.hyperparameters.pre_trained_generator_model
+            rank_zero_warn('Found None `pre_trained_generator_config`, setting equal to `pre_trained_generator_model`')
 
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+        r""" Setup discriminator and generator configs. """
+
         # discriminator config
-        if self.requires_extended_model():
-            CONFIG_CLASS = self.CONFIG_EXTENDED_CLASS
-        if self.hyperparameters.k is not None:
-            kwargs['k'] = self.hyperparameters.k
-        if self.hyperparameters.extended_token_type_ids is not None:
-            kwargs['type_vocab_size'] = max(self.hyperparameters.extended_token_type_ids) + 1
+        discriminator_kwargs = {**kwargs}
         if self.hyperparameters.classification_head_type is not None:
-            kwargs['classification_head_type'] = self.hyperparameters.classification_head_type
+            discriminator_kwargs['classification_head_type'] = self.hyperparameters.classification_head_type
+        discriminator_kwargs['num_labels'] = self.hyperparameters.num_labels
 
-        config = CONFIG_CLASS.from_pretrained(
-            self.hyperparameters.pre_trained_config, num_labels=self.hyperparameters.num_labels, **kwargs
+        config = super().setup_config(
+            pre_trained_config=self.hyperparameters.pre_trained_config,
+            **discriminator_kwargs,
         )
 
         # generator config
-        if self.hyperparameters.pre_trained_generator_config is not None:
-            self.generator_config = self.CONFIG_CLASS.from_pretrained(  # this is still the original config class
-                self.hyperparameters.pre_trained_generator_config
+        generator_kwargs = {**kwargs}
+        if self.hyperparameters.pre_trained_generator_config is None:
+            generator_kwargs.update(
+                self.get_generator_config_parameters(config, generator_size=self.hyperparameters.generator_size)
             )
-        elif self.hyperparameters.pre_trained_generator_model is not None:
-            rank_zero_warn(
-                'Found None `pre_trained_generator_config`, setting equal to `pre_trained_generator_model`'
-            )
-            self.hyperparameters.pre_trained_generator_config = self.hyperparameters.pre_trained_generator_model
-            self.generator_config = self.CONFIG_CLASS.from_pretrained(
-                self.hyperparameters.pre_trained_generator_config
-            )
-        else:
-            rank_zero_warn(
-                f"Automatically creating generator config of size {self.hyperparameters.generator_size}"
-            )
-            self.generator_config = self.get_generator_config(config)
 
-        return config
-
-    def configure_model(self, config: PretrainedConfig, **kwargs) -> PreTrainedModel:
-        r""" Configure models. """
-        if self.requires_extended_model():
-            self.MODEL_CLASS = self.MODEL_EXTENDED_CLASS
-
-        generator = self.load_model(
-            self.GENERATOR_MODEL_CLASS, self.hyperparameters.pre_trained_generator_model, config=self.generator_config
+        generator_config = super().setup_config(
+            pre_trained_config=self.hyperparameters.pre_trained_generator_config, **generator_kwargs
         )
-        model = self.load_model(self.MODEL_CLASS, self.hyperparameters.pre_trained_model, config=config)
+
+        return {'config': config, 'generator_config': generator_config}
+
+    def setup_model(self, **kwargs) -> Union[PreTrainedModel, Dict[str, PreTrainedModel]]:
+        r""" Configure models. """
+        generator = super().setup_model(
+            config=self.generator_config,
+            model_class=self.GENERATOR_MODEL_CLASS,
+            pre_trained_model=self.hyperparameters.pre_trained_generator_model,
+            **kwargs,
+        )
+
+        model = super().setup_model(
+            config=self.config,
+            model_class=self.MODEL_CLASS,
+            pre_trained_model=self.hyperparameters.pre_trained_model,
+            **kwargs,
+        )
+
         return {'generator': generator, 'model': model}
 
     def step(self, batch: Dict) -> MaskedLMAndTokenDetectionAndSeqClassStepOutput:

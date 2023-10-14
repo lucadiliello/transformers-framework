@@ -1,6 +1,10 @@
+import operator
 import os
 
 import datasets
+import deepspeed
+import lightning
+import lightning.fabric as fabric
 import lightning.pytorch as pl
 import torch
 import torch._dynamo
@@ -15,6 +19,7 @@ from lightning.pytorch.callbacks import (
     StochasticWeightAveraging,
 )
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning_utilities.core.imports import compare_version
 
 from transformers_framework import __version__
 from transformers_framework.callbacks.early_stopping import EarlyStopping
@@ -26,10 +31,14 @@ from transformers_framework.pipelines import pipelines
 from transformers_framework.utilities.arguments import (
     FlexibleArgumentParser,
     add_trainer_args,
+    apply_fixes,
     get_trainer_args_from_hyperparameters,
 )
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
+
+
+_TORCH_GREATER_EQUAL_2 = compare_version("torch", operator.ge, "2.0.0", use_base_version=True)
 
 
 # too much complains of the tokenizers
@@ -37,7 +46,7 @@ transformers.logging.set_verbosity_error()
 # when using workers in dataloaders it is better to disable tokenizers parallelism
 os.environ['TOKENIZERS_PARALLELISM'] = "false"
 
-# reduce memory usage
+# reduce RAM usage
 datasets.config.IN_MEMORY_MAX_SIZE = 0
 
 TENSORBOARD_DIR = 'tensorboard'
@@ -46,10 +55,13 @@ PRE_TRAINED_DIR = "pre_trained_models"
 PREDICTIONS_DIR = "predictions"
 
 # set verbose mode with Dynamo for better error traces when compiling
-torch._dynamo.config.verbose = True
+torch._dynamo.config.verbose = False
 
 
 def main(hyperparameters: ExtendedNamespace):
+
+    # apply fixes to hyperparameters
+    hyperparameters = apply_fixes(hyperparameters)
 
     # Print systems info
     rank_zero_info(
@@ -60,10 +72,13 @@ def main(hyperparameters: ExtendedNamespace):
         f"Running on\n"
         f"  - transformers-framework={__version__}\n"
         f"  - torch={torch.__version__}\n"
+        f"  - lightning={lightning.__version__}\n"
+        f"      - pytorch={pl.__version__}\n"
+        f"      - fabric={fabric.__version__}\n"
+        f"      - torchmetrics={torchmetrics.__version__}\n"
         f"  - transformers={transformers.__version__}\n"
-        f"  - pytorch-lightning={pl.__version__}\n"
         f"  - datasets={datasets.__version__}\n"
-        f"  - torchmetrics={torchmetrics.__version__}\n"
+        f"  - deepspeed={deepspeed.__version__}\n"
     )
 
     # compute relative paths. tensorboard will add name by itself
@@ -184,6 +199,8 @@ def main(hyperparameters: ExtendedNamespace):
 
 if __name__ == '__main__':
 
+    assert _TORCH_GREATER_EQUAL_2, "Transformer-Framework is compatible only with torch>=2.0.0"
+
     # Read config for defaults and eventually override with hyper-parameters from command line
     parser = FlexibleArgumentParser(
         prog=f"Transformers Framework v{__version__}",
@@ -198,7 +215,7 @@ if __name__ == '__main__':
     tmp_params = parser.parse_known_args()[0]
     parser.add_argument('--model', type=str, required=True, choices=pipelines[tmp_params.pipeline].keys())
 
-    # experiment name, used both for checkpointing, pre_trained_names, logging and tensorboard
+    # experiment name, used both for checkpointing pre trained models and status, logging and tensorboard
     parser.add_argument('--name', type=str, required=True, help='Name of the model')
 
     # various options

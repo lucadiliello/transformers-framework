@@ -7,7 +7,6 @@ import torch
 import torch.distributed as dist
 from lightning.pytorch.trainer import Trainer
 from torch import nn
-from tqdm import tqdm
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.models.deberta_v2.configuration_deberta_v2 import DebertaV2Config
@@ -17,6 +16,7 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from transformers_framework.utilities.hash import hash_string
 from transformers_framework.utilities.logging import rank_zero_info, rank_zero_warn
+from transformers_framework.utilities.progress import DownloadProgress
 
 
 def tie_or_clone_weights(output_embeddings, input_embeddings):
@@ -157,43 +157,24 @@ def tie_weights_deberta(generator, discriminator, tie_generator_discriminator_em
             )
 
 
-def get_electra_reduced_generator_config(discriminator_config: ElectraConfig, factor: float = 1 / 3, **kwargs):
+def get_electra_reduced_generator_config(discriminator_config: ElectraConfig, factor: float = 1 / 3) -> Dict:
     r""" Created reduced configuration for electra generator. """
     params = {
         **vars(discriminator_config),
         'hidden_size': int(discriminator_config.hidden_size * factor),
         'num_attention_heads': int(discriminator_config.num_attention_heads * factor),
         'intermediate_size': int(discriminator_config.intermediate_size * factor),
-        **kwargs,
     }
-    return ElectraConfig(**params)
+    return params
 
 
-def get_deberta_reduced_generator_config(discriminator_config: DebertaV2Config, factor: float = 1 / 2, **kwargs):
+def get_deberta_reduced_generator_config(discriminator_config: DebertaV2Config, factor: float = 1 / 2) -> Dict:
     r""" Created reduced configuration for deberta generator. """
     params = {
         **vars(discriminator_config),
         'num_hidden_layers': int(discriminator_config.num_hidden_layers * factor),
-        **kwargs,
     }
-    return DebertaV2Config(**params)
-
-
-class DownloadProgress(object):
-
-    def __init__(self, total: int = None, name: str = None):
-        super().__init__()
-        name = "Downloading" if name is None else f"Downloading {os.path.split(name)[-1]}"
-        self.progress = tqdm(desc=name, total=total, unit="B", unit_scale=True)
-
-    def __enter__(self):
-        return self.callback
-
-    def callback(self, chunk):
-        self.progress.update(chunk)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.progress.close()
+    return params
 
 
 def download_s3_folder(s3_path: str, local_dir: str):

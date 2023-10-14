@@ -7,7 +7,7 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers_framework.interfaces.adaptation import sequence_classification_adaptation
 from transformers_framework.interfaces.logging import LOSS, SEQ_CLASS_ACCURACY, SEQ_CLASS_F1
 from transformers_framework.interfaces.step import SeqClassStepOutput
-from transformers_framework.pipelines.pipeline.pipeline import ExtendedPipeline
+from transformers_framework.pipelines.pipeline import ExtendedPipeline
 from transformers_framework.processing.postprocessors import seq_class_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_seq_class_arguments
@@ -41,15 +41,9 @@ class SeqClassPipeline(ExtendedPipeline):
         self.test_acc = MulticlassAccuracy(*metrics_args, **metrics_kwargs)
         self.test_f1 = MulticlassF1Score(*metrics_args, **metrics_kwargs)
 
-    def requires_extended_tokenizer(self):
-        return len(self.hyperparameters.input_columns) > 2
-
-    def requires_extended_model(self):
-        return self.hyperparameters.k is not None
-
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         kwargs['num_labels'] = self.hyperparameters.num_labels
-        return super().configure_config(**kwargs)
+        return super().setup_config(**kwargs)
 
     def step(self, batch: Dict) -> SeqClassStepOutput:
         r""" Forward step is shared between all train/val/test steps. """

@@ -508,11 +508,14 @@ def get_generation_args_from_hyperparameters(hyperparameters: ExtendedNamespace)
 
 def add_trainer_args(parser: ArgumentParser):
     r""" Add to the argument parser all the training arguments regarding the hardware and the setup. """
-    allowed_prec = ('16-mixed', '16-true', 'bf16-mixed', 'bf16-true', '32-true', '64-true')
+    allowed_prec = (
+        '16-mixed', '16-true', 'bf16-mixed', 'bf16-true', '32-true', '64-true',
+        'nf4', 'f4-dq', 'fp4', 'fp4-dq', 'int8', 'int8-training',
+    )
 
     parser.add_argument('--accelerator', type=str, default="auto", required=False)
     parser.add_argument('--strategy', type=str, default="auto", required=False)
-    parser.add_argument('--devices', type=int, default="auto", required=False)
+    parser.add_argument('--devices', type=int_or_str, default="auto", required=False)
     parser.add_argument('--num_nodes', type=int, default=1, required=False)
     parser.add_argument('--precision', type=str, default=allowed_prec[0], required=False, choices=allowed_prec)
     parser.add_argument('--fast_dev_run', action="store_true")
@@ -548,6 +551,10 @@ def apply_fixes(hyperparameters: ExtendedNamespace) -> ExtendedNamespace:
         hyperparameters.num_sanity_val_steps = 0
         hyperparameters.limit_val_batches = 0
 
+    # process max sequence length
+    if len(hyperparameters.max_sequence_length) == 1:
+        hyperparameters.max_sequence_length = hyperparameters.max_sequence_length[0]
+
     return hyperparameters
 
 
@@ -558,7 +565,6 @@ def get_trainer_args_from_hyperparameters(hyperparameters: ExtendedNamespace) ->
     strategy = initialize_strategy(hyperparameters)
     precision = initialize_precision(hyperparameters)
     profiler = initialize_profiler(hyperparameters)
-    hyperparameters = apply_fixes(hyperparameters)
 
     res = dict(
         accelerator=hyperparameters.accelerator,

@@ -1,3 +1,5 @@
+from typing import Dict
+
 from transformers.configuration_utils import PretrainedConfig
 from transformers.models.electra.modeling_electra import ElectraConfig, ElectraForMaskedLM
 from transformers.models.electra.tokenization_electra_fast import ElectraTokenizerFast
@@ -18,10 +20,8 @@ class ElectraTokenDetectionAndMaskedLMAndSeqClassPipeline(
     GENERATOR_MODEL_CLASS = ElectraForMaskedLM
     MODEL_CLASS = ElectraForPreTrainingAndSequenceClassification
 
-    def get_generator_config(self, config: PretrainedConfig):
-        return get_electra_reduced_generator_config(
-            config, factor=self.hyperparameters.generator_size
-        )
+    def get_generator_config_parameters(self, config: PretrainedConfig, generator_size: float = 1 / 3) -> Dict:
+        return get_electra_reduced_generator_config(config, factor=generator_size)
 
     def tie_weights(self):
         tie_weights_electra(

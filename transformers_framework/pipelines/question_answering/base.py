@@ -16,7 +16,7 @@ from transformers_framework.interfaces.logging import (
     QUESTION_ANSWERING_START_ACCURACY,
 )
 from transformers_framework.interfaces.step import QuestionAnsweringStepOutput
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import question_answering_processor
 from transformers_framework.processing.preprocessors import prepare_dataset_question_answering
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_question_answering_arguments
@@ -49,9 +49,9 @@ class QuestionAnsweringPipeline(Pipeline):
         self.test_start_acc = MulticlassAccuracy(*metrics_args, **metrics_hparams)
         self.test_end_acc = MulticlassAccuracy(*metrics_args, **metrics_hparams)
 
-    def configure_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
-        kwargs['num_labels'] = 2  # always 2 classes for machine reading
-        return super().configure_config(**kwargs)
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
+        kwargs['num_labels'] = 2  # always 2 classes for extractive question answering
+        return super().setup_config(**kwargs)
 
     def step(self, batch: Dict) -> QuestionAnsweringStepOutput:
         r""" Forward step is shared between all train/val/test steps. """

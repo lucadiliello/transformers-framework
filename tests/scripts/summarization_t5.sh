@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline summarization \
     --model t5 \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

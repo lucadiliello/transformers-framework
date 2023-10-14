@@ -7,7 +7,7 @@ from transformers_framework.interfaces.adaptation import masked_lm_adaptation
 from transformers_framework.interfaces.logging import MASKED_LM_ACCURACY, MASKED_LM_LOSS, MASKED_LM_PERPLEXITY
 from transformers_framework.interfaces.step import MaskedLMStepOutput
 from transformers_framework.metrics.perplexity import Perplexity
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import masked_lm_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_masked_lm_arguments

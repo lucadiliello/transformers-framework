@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from transformers.configuration_utils import PretrainedConfig
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.t5.modeling_t5 import T5ForConditionalGeneration
@@ -21,10 +23,10 @@ class T5MultiTokenSummarizationPipeline(T5SummarizationPipeline):
     CONFIG_CLASS = T5MultiTokenConfig
     MODEL_CLASS = T5ForMultiTokenConditionalGeneration
 
-    def configure_config(self) -> PretrainedConfig:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         r""" Just add max_output_embeddings attirbute. """
-        kwargs = dict(max_multi_token_predictions=self.hyperparameters.max_multi_token_predictions)
-        return super().configure_config(**kwargs)
+        kwargs['max_multi_token_predictions'] = self.hyperparameters.max_multi_token_predictions
+        return super().setup_config(**kwargs)
 
     @classmethod
     def add_argparse_args(cls, parser: FlexibleArgumentParser):

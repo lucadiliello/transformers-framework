@@ -78,7 +78,7 @@ All the arguments of `pytorch-lightning` trainer are integrated in this framewor
 --devices 8 \
 --accelerator gpu \
 --strategy deepspeed_stage_2 \
---precision 16 \
+--precision '16-mixed' \
 ```
 
 Is it also very important (and mandatory) to assign a unique name to every run through
@@ -167,7 +167,7 @@ python -m transformers_framework \
     --pipeline answer_selection \
     --model roberta \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu \
     --strategy ddp \
     --devices 8 \
@@ -212,7 +212,7 @@ python -m transformers_framework \
     --devices 8 \
     --accelerator gpu \
     --strategy deepspeed_stage_2 \
-    --precision 16 \
+    --precision '16-mixed' \
     \
     --pre_trained_generator_config microsoft/deberta-v3-small \
     --pre_trained_config microsoft/deberta-v3-base \
@@ -245,7 +245,7 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 python -m transformers_framework \
     --pipeline answer_selection \
     --model roberta \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator mps \
     --devices 1 \
     --pre_trained_model roberta-base \

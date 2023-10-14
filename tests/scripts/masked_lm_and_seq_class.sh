@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline masked_lm_and_seq_class \
     --model roberta \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

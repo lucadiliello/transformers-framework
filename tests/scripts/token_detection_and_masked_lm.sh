@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline token_detection_and_masked_lm \
     --model deberta_v2 \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

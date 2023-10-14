@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 from transformers.configuration_utils import PretrainedConfig
 from transformers.models.bart.configuration_bart import BartConfig
 from transformers.models.bart.modeling_bart import BartForConditionalGeneration
@@ -21,10 +23,10 @@ class BartMultiTokenSummarizationPipeline(BartSummarizationPipeline):
     CONFIG_CLASS = BartMultiTokenConfig
     MODEL_CLASS = BartForMultiTokenConditionalGeneration
 
-    def configure_config(self) -> PretrainedConfig:
+    def setup_config(self, **kwargs) -> Union[PretrainedConfig, Dict[str, PretrainedConfig]]:
         r""" Just add max_output_embeddings attirbute. """
-        kwargs = dict(max_multi_token_predictions=self.hyperparameters.max_multi_token_predictions)
-        return super().configure_config(**kwargs)
+        kwargs['max_multi_token_predictions'] = self.hyperparameters.max_multi_token_predictions
+        return super().setup_config(**kwargs)
 
     @classmethod
     def add_argparse_args(cls, parser: FlexibleArgumentParser):

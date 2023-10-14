@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline answer_selection \
     --model roberta \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \
@@ -10,7 +10,7 @@ python -m transformers_framework \
     --name roberta-base-extended-wikiqa \
     --output_dir /tmp/transformers_framework \
     \
-    --batch_size 32 \
+    --batch_size 8 \
     --train_dataset lucadiliello/wikiqa_grouped/train \
     --valid_dataset lucadiliello/wikiqa_grouped/dev \
     --test_dataset lucadiliello/wikiqa_grouped/test \
@@ -38,4 +38,6 @@ python -m transformers_framework \
     --grouping random \
     --reload_dataloaders_every_n_epochs 1 \
     --reload_train_dataset_every_epoch \
-    --prepare_data_do_not_use_cache
+    --prepare_data_do_not_use_cache \
+    --additional_config_kwargs classification_head_type=RE_k \
+    --pad_to_k

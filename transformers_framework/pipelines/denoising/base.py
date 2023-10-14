@@ -7,7 +7,7 @@ from transformers_framework.architectures.modeling_outputs import SeqToSeqLMOutp
 from transformers_framework.interfaces.adaptation import seq_to_seq_lm_adaptation
 from transformers_framework.interfaces.logging import SEQ_TO_SEQ_LM_ACCURACY, SEQ_TO_SEQ_LM_F1, SEQ_TO_SEQ_LM_LOSS
 from transformers_framework.interfaces.step import SeqToSeqMaskedLMStepOutput
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_denoising_arguments
 
 

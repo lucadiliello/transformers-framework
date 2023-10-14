@@ -11,9 +11,9 @@ python -m transformers_framework \
     --output_dir /tmp/transformers_framework \
     \
     --batch_size 16 \
-    --train_dataset lucadiliello/asnq/train \
-    --valid_dataset lucadiliello/asnq/dev \
-    --test_dataset lucadiliello/asnq/test \
+    --train_dataset lucadiliello/wikiqa/train \
+    --valid_dataset lucadiliello/wikiqa/dev_clean \
+    --test_dataset lucadiliello/wikiqa/dev_clean \
     --input_columns question answer \
     --label_column label \
     --index_column key \

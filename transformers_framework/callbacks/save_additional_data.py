@@ -12,10 +12,10 @@ from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_only, rank_zero_warn
 
 
-ADDITIONAL_DATA_DIR = "additional"
+DEFAULT_DATA_DIR = "additional"
 
 
-class AdditionalDataCallback(Callback):
+class SaveDataCallback(Callback):
     r"""
     This class allow to save additional data at each step or epoch end.
 
@@ -27,7 +27,7 @@ class AdditionalDataCallback(Callback):
     def __init__(self, hyperparameters: ExtendedNamespace, attribute_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hyperparameters = hyperparameters
-        self.destination = os.path.join(hyperparameters.output_dir, ADDITIONAL_DATA_DIR, hyperparameters.name)
+        self.destination = os.path.join(hyperparameters.output_dir, DEFAULT_DATA_DIR, hyperparameters.name)
         self.attribute_name = attribute_name
 
     def save(self, data: Any, filepath: str):

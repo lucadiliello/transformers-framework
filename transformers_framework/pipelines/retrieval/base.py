@@ -18,7 +18,7 @@ from transformers_framework.interfaces.logging import (
     RETRIEVAL_PRECISION,
 )
 from transformers_framework.interfaces.step import RetrievalStepOutput
-from transformers_framework.pipelines.pipeline.pipeline import Pipeline
+from transformers_framework.pipelines.pipeline import Pipeline
 from transformers_framework.processing.postprocessors import retrieval_processor
 from transformers_framework.utilities import IGNORE_IDX
 from transformers_framework.utilities.arguments import FlexibleArgumentParser, add_retrieval_arguments
@@ -72,22 +72,22 @@ class RetrievalPipeline(Pipeline):
         self.valid_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.valid_map = RetrievalMAP(**metrics_kwargs)
         self.valid_mrr = RetrievalMRR(**metrics_kwargs)
-        self.valid_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
-        self.valid_p5 = RetrievalPrecision(k=5, **metrics_kwargs)
-        self.valid_p100 = RetrievalPrecision(k=100, **metrics_kwargs)
-        self.valid_hr5 = RetrievalHitRate(k=5, **metrics_kwargs)
-        self.valid_hr100 = RetrievalHitRate(k=100, **metrics_kwargs)
+        self.valid_p1 = RetrievalPrecision(top_k=1, **metrics_kwargs)
+        self.valid_p5 = RetrievalPrecision(top_k=5, **metrics_kwargs)
+        self.valid_p100 = RetrievalPrecision(top_k=100, **metrics_kwargs)
+        self.valid_hr5 = RetrievalHitRate(top_k=5, **metrics_kwargs)
+        self.valid_hr100 = RetrievalHitRate(top_k=100, **metrics_kwargs)
 
         # test metrics
         self.test_acc = BinaryAccuracy(ignore_index=IGNORE_IDX)
         self.test_f1 = BinaryF1Score(ignore_index=IGNORE_IDX)
         self.test_map = RetrievalMAP(**metrics_kwargs)
         self.test_mrr = RetrievalMRR(**metrics_kwargs)
-        self.test_p1 = RetrievalPrecision(k=1, **metrics_kwargs)
-        self.test_p5 = RetrievalPrecision(k=5, **metrics_kwargs)
-        self.test_p100 = RetrievalPrecision(k=100, **metrics_kwargs)
-        self.test_hr5 = RetrievalHitRate(k=5, **metrics_kwargs)
-        self.test_hr100 = RetrievalHitRate(k=100, **metrics_kwargs)
+        self.test_p1 = RetrievalPrecision(top_k=1, **metrics_kwargs)
+        self.test_p5 = RetrievalPrecision(top_k=5, **metrics_kwargs)
+        self.test_p100 = RetrievalPrecision(top_k=100, **metrics_kwargs)
+        self.test_hr5 = RetrievalHitRate(top_k=5, **metrics_kwargs)
+        self.test_hr100 = RetrievalHitRate(top_k=100, **metrics_kwargs)
 
         # set model names to reduce manually because it depends on self.hyperparameters.k
         self.MODEL_INPUT_NAMES_TO_REDUCE = [

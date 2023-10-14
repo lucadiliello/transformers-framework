@@ -143,7 +143,7 @@ def adapt_label_names_to_transformers(kwargs: Dict[str, torch.Tensor]) -> Dict[s
     labels_keys = [k for k in kwargs.keys() if 'labels' in k]
 
     assert all(k in ADMISSIBLE_LABEL_NAMES for k in labels_keys), (  # nosec
-        f"encountered keys not among allowed. got {labels_keys}, expected: {ADMISSIBLE_LABEL_NAMES}"
+        f"encountered keys not among allowed. got {labels_keys}, expected keys in {ADMISSIBLE_LABEL_NAMES}"
     )
 
     # working with original transformer models, just a single 'labels' keyword for every task

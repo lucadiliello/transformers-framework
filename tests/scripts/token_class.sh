@@ -2,7 +2,7 @@ python -m transformers_framework \
     --pipeline token_class \
     --model bert \
     \
-    --precision 16 \
+    --precision '16-mixed' \
     --accelerator gpu --strategy deepspeed_stage_2 \
     --devices 2 \
     \

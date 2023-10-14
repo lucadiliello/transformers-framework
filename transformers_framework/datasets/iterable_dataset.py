@@ -1,9 +1,9 @@
 from typing import Dict, Iterable
 
 import torch
-from lightning_fabric.utilities.distributed import _distributed_available as distributed_available
 from torch.utils.data import IterableDataset as _IterableDataset
 
+from transformers_framework.utilities.distributed import distributed_available
 from transformers_framework.utilities.functional import batch_filter, filter_generator
 
 

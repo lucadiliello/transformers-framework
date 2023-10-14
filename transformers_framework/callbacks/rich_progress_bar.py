@@ -30,9 +30,16 @@ theme = CustomRichProgressBarTheme(
 
 class CustomMetricsTextColumn(MetricsTextColumn):
 
-    def __init__(self, trainer: "pl.Trainer", style: Union[str, "Style"], keys_style: Union[str, "Style"]):
-        super().__init__(trainer, style)
-        self.keys_style = keys_style
+    def __init__(
+        self,
+        trainer: "pl.Trainer",
+        style: Union[str, "Style"],
+        keys_style: Union[str, "Style"],
+        text_delimiter: str,
+        metrics_format: str,
+    ):
+        super().__init__(trainer, style, text_delimiter, metrics_format)
+        self._keys_style = keys_style
 
     def render(self, task: "Task") -> Text:
         assert isinstance(self._trainer.progress_bar_callback, RichProgressBar)  # nosec
@@ -55,7 +62,7 @@ class CustomMetricsTextColumn(MetricsTextColumn):
         for k, v in self._metrics.items():
             text += f"{k}: {round(v, 3) if isinstance(v, float) else v} "
         res = Text(text, justify="left", style=self._style)
-        res.highlight_words(self._metrics.keys(), style=self.keys_style)
+        res.highlight_words(self._metrics.keys(), style=self._keys_style)
         return res
 
 
@@ -83,7 +90,13 @@ class RichProgressBar(_RichProgressBar):
             reconfigure(**self._console_kwargs)
             self._console = get_console()
             self._console.clear_live()
-            self._metric_component = CustomMetricsTextColumn(trainer, self.theme.metrics, self.theme.metrics_keys)
+            self._metric_component = CustomMetricsTextColumn(
+                trainer,
+                self.theme.metrics,
+                self.theme.metrics_keys,
+                self.theme.metrics_text_delimiter,
+                self.theme.metrics_format,
+            )
             self.progress = CustomProgress(
                 *self.configure_columns(trainer),
                 self._metric_component,
