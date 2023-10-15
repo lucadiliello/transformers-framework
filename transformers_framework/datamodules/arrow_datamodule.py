@@ -195,7 +195,10 @@ class ArrowDataModule(LightningDataModule):
             keep_in_memory=self.hyperparameters.keep_in_memory,
             shard=self.hyperparameters[f'{TrainerFn_to_Names[stage]}_shard_dataset'],
         )
-        rank_zero_info(f"Loaded {stage.value.capitalize()} dataset from {location}. Length: {len(dataset)}")
+        rank_zero_info(
+            f"Loaded {stage.value.capitalize()} dataset from {location}."
+            f" Number of examples: {len(dataset)}"
+        )
 
         # create pytorch dataset instance
         dataset = (IterableDataset if self.hyperparameters.iterable else MapDataset)(dataset)

@@ -216,7 +216,7 @@ def download_s3_folder(s3_path: str, local_dir: str):
     rank_zero_info("Syncronization from s3 completed successfully")
 
 
-def download_model_from_s3(
+def download_from_s3(
     model_path: str, temporary_models_folder: str = None, download_model_per_node: bool = True, trainer: Trainer = None
 ) -> str:
     r""" Guard to run code only on local/global (based on download_model_per_node) rank in distributed setting. """
@@ -311,7 +311,7 @@ def load_config(
         if name_or_path.startswith('s3://'):
             assert temporary_models_folder is not None
 
-            name_or_path = download_model_from_s3(
+            name_or_path = download_from_s3(
                 name_or_path,
                 temporary_models_folder=temporary_models_folder,
                 download_model_per_node=download_model_per_node,
@@ -343,7 +343,7 @@ def load_model(
         if name_or_path.startswith('s3://'):
             assert temporary_models_folder is not None
 
-            name_or_path = download_model_from_s3(
+            name_or_path = download_from_s3(
                 name_or_path,
                 temporary_models_folder=temporary_models_folder,
                 download_model_per_node=download_model_per_node,
@@ -373,7 +373,7 @@ def load_tokenizer(
         if name_or_path.startswith('s3://'):
             assert temporary_models_folder is not None
 
-            name_or_path = download_model_from_s3(
+            name_or_path = download_from_s3(
                 name_or_path,
                 temporary_models_folder=temporary_models_folder,
                 download_model_per_node=download_model_per_node,
