@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Tuple, Union
 
 import torch
 from lightning.pytorch.plugins import BitsandbytesPrecisionPlugin
@@ -7,6 +7,7 @@ from lightning.pytorch.profilers.profiler import Profiler
 from lightning.pytorch.profilers.pytorch import PyTorchProfiler
 from lightning.pytorch.strategies.ddp import DDPStrategy
 from lightning.pytorch.strategies.strategy import Strategy
+from lightning.pytorch.plugins.precision import PrecisionPlugin
 
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.logging import rank_zero_error, rank_zero_info, rank_zero_warn
@@ -63,17 +64,8 @@ def initialize_strategy(hyperparameters: ExtendedNamespace) -> Union[Strategy, s
     return hyperparameters.strategy
 
 
-def initialize_precision(hyperparameters: ExtendedNamespace) -> Union[str, int]:
+def initialize_precision(hyperparameters: ExtendedNamespace) -> Tuple[Union[str, None], Union[PrecisionPlugin, None]]:
     r""" Checks over precision and used model. """
-
-    precision = hyperparameters.precision
-
-    # no gradient clipping needed if running with fp16
-    if precision in ('16-mixed', '16-true') and hyperparameters.gradient_clip_val:
-        rank_zero_warn(
-            "There is no need to use `gradient_clip_val` with `precision=16-*` "
-            "since gradients are scaled automatically before the optimization step."
-        )
 
     # precision speedup
     fast_fp32_matmul = os.environ.get('TRANSFORMERS_FRAMEWORK_FP32_MATMUL_PRECISION', 'medium')
@@ -91,20 +83,34 @@ def initialize_precision(hyperparameters: ExtendedNamespace) -> Union[str, int]:
         torch.backends.cudnn.allow_tf32 = allow_tf32
         torch.backends.cuda.matmul.allow_tf32 = allow_tf32
 
+    # create precision plugin if specific type used
+    precision = hyperparameters.precision
+
+    # no gradient clipping needed if running with fp16
+    if precision in ('16-mixed', '16-true') and hyperparameters.gradient_clip_val:
+        rank_zero_warn(
+            "There is no need to use `gradient_clip_val` with `precision=16-*` "
+            "since gradients are scaled automatically before the optimization step."
+        )
+
     # bitsandbytes
     if precision in ('nf4', 'f4-dq', 'fp4', 'fp4-dq', 'int8', 'int8-training'):
-        return BitsandbytesPrecisionPlugin(precision)
+        if '8bit' not in hyperparameters.optimizer:
+            rank_zero_warn(
+                "You are using BitsAndBytes reduced precision training but you are not using a low precision optimizer"
+           )
+        return None, BitsandbytesPrecisionPlugin(precision, dtype=torch.bfloat16)
 
-    if 't5' in hyperparameters.model:
-        if precision == '16-mixed' and hyperparameters.get('accelerator') != 'mps':
+    if 't5' in hyperparameters.model and hyperparameters.get('accelerator') not in ('mps', 'cpu'):
+        if precision == '16-mixed':
             rank_zero_warn("Precision set to '16-mixed' but model is T5. Changing precision to 'bf16-mixed' for you.")
-            return 'bf16-mixed'
+            return 'bf16-mixed', None
 
-        if precision == '16-true' and hyperparameters.get('accelerator') != 'mps':
+        if precision == '16-true':
             rank_zero_warn("Precision set to '16-true' but model is T5. Changing precision to 'bf16-true' for you.")
-            return 'bf16-true'
+            return 'bf16-true', None
 
-    return precision
+    return precision, None
 
 
 def initialize_profiler(hyperparameters: ExtendedNamespace) -> Union[str, Profiler]:

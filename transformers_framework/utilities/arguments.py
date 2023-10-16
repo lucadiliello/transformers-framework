@@ -510,7 +510,7 @@ def add_trainer_args(parser: ArgumentParser):
     r""" Add to the argument parser all the training arguments regarding the hardware and the setup. """
     allowed_prec = (
         '16-mixed', '16-true', 'bf16-mixed', 'bf16-true', '32-true', '64-true',
-        'nf4', 'f4-dq', 'fp4', 'fp4-dq', 'int8', 'int8-training',
+        'nf4', 'f4-dq', 'fp4', 'fp4-dq', 'int8', 'int8-training', "transformer-engine", "transformer-engine-float16",
     )
 
     parser.add_argument('--accelerator', type=str, default="auto", required=False)
@@ -563,7 +563,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: ExtendedNamespace) ->
 
     # strategies and precision setup
     strategy = initialize_strategy(hyperparameters)
-    precision = initialize_precision(hyperparameters)
+    precision, plugin = initialize_precision(hyperparameters)
     profiler = initialize_profiler(hyperparameters)
 
     res = dict(
@@ -572,6 +572,7 @@ def get_trainer_args_from_hyperparameters(hyperparameters: ExtendedNamespace) ->
         devices=hyperparameters.devices,
         num_nodes=hyperparameters.num_nodes,
         precision=precision,
+        plugins=plugin,
         fast_dev_run=hyperparameters.fast_dev_run,
         max_epochs=hyperparameters.max_epochs,
         min_epochs=hyperparameters.min_epochs,

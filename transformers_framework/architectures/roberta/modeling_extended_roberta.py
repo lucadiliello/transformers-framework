@@ -73,6 +73,7 @@ class RobertaForExtendedSequenceClassification(RobertaPreTrainedModel):
 
 class RobertaForMaskedLMAndExtendedSequenceClassification(RobertaPreTrainedModel):
 
+    _tied_weights_keys = ["lm_head.decoder.weight", "lm_head.decoder.bias"]
     _keys_to_ignore_on_save = [r"lm_head.decoder.weight", r"lm_head.decoder.bias"]
     _keys_to_ignore_on_load_missing = [r"lm_head.decoder.weight", r"lm_head.decoder.bias"]
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -90,9 +91,6 @@ class RobertaForMaskedLMAndExtendedSequenceClassification(RobertaPreTrainedModel
         self.roberta = RobertaModel(config, add_pooling_layer=False)
         self.lm_head = RobertaLMHead(config)
         self.classifier = ExtendedClassificationHead(config)
-
-        # The LM head weights require special treatment only when they are tied with the word embeddings
-        self.update_keys_to_ignore(config, ["lm_head.decoder.weight"])
 
         # Initialize weights and apply final processing
         self.post_init()

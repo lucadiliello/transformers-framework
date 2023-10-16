@@ -8,7 +8,8 @@ from torchmetrics import Metric
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-
+from bitsandbytes.optim import GlobalOptimManager
+from bitsandbytes.optim.optimizer import Optimizer2State
 from transformers_framework.architectures.tokenization_utils import ExtendedTokenizerFast
 from transformers_framework.interfaces.adaptation import adapt_label_names_to_transformers
 from transformers_framework.optimizers import optimizers
@@ -52,10 +53,12 @@ class Pipeline(LightningModule):
         self.save_hyperparameters(hyperparameters)
         self.fix_pre_trained_paths()
 
-    def configure_model(self):
-        r""" All models initializations goes here. """
-    
-        # setup all configurations
+        # models are initialized later
+        self.configure_configurations()
+        self.configure_tokenizers()
+
+    def configure_configurations(self):
+        r""" All configurations initializatios go here. """
         additiona_configuration_key_values = parse_additional_kargs(self.hyperparameters.additional_config_kwargs)
         configs = self.setup_config(**additiona_configuration_key_values)
 
@@ -65,7 +68,8 @@ class Pipeline(LightningModule):
         assert 'config' in configs, "Need to instantiate at least a config with key 'config'"  # nosec
         add_dict_to_attributes(self, configs)
 
-        # setup all models
+    def configure_model(self):
+        r""" All models initializations go here. """
         models = self.setup_model()
         models = {'model': models} if not isinstance(models, Dict) else models  # eventually convert to dict
 
@@ -76,16 +80,16 @@ class Pipeline(LightningModule):
         assert 'model' in models, "Need to instantiate at least a model with key 'model'"  # nosec
         add_dict_to_attributes(self, models)
 
-        # setup all configurations
-        self.tokenizer = self.setup_tokenizer()
-
         # this simplifies our life with decoder models because every model defines start decoding token id differently
         if self.config.is_encoder_decoder or self.config.is_decoder:
             set_decoder_start_token_id(self.model, self.tokenizer)
 
+    def configure_tokenizers(self):
+        r""" The tokenizer initialization goes here. """
+        self.tokenizer = self.setup_tokenizer()
+
     def forward(self, model: str = 'model', **kwargs):
         r""" Forward pass with pre and post processing. """
-
         if self.PRE_FORWARD_ADAPTER is not None:
             kwargs = self.__class__.PRE_FORWARD_ADAPTER(kwargs)
 
@@ -129,7 +133,7 @@ class Pipeline(LightningModule):
             name_or_path=pre_trained_config,
             temporary_models_folder=temporary_models_folder,
             download_model_per_node=prepare_data_per_node,
-            trainer=self.trainer,
+            trainer=self.get_trainer_safe(),
             **kwargs,
         )
 
@@ -150,7 +154,7 @@ class Pipeline(LightningModule):
             config=config,
             temporary_models_folder=temporary_models_folder,
             download_model_per_node=prepare_data_per_node,
-            trainer=self.trainer,
+            trainer=self.get_trainer_safe(),
             **kwargs,
         )
 
@@ -166,7 +170,7 @@ class Pipeline(LightningModule):
             name_or_path=pre_trained_tokenizer,
             temporary_models_folder=temporary_models_folder,
             download_model_per_node=prepare_data_per_node,
-            trainer=self.trainer,
+            trainer=self.get_trainer_safe(),
             **kwargs,
         )
 
@@ -187,8 +191,18 @@ class Pipeline(LightningModule):
         A scheduler is also instantiated to manage the learning rate.
         """
         optimizer_class = optimizers[self.hyperparameters.optimizer]
+
+        # trick to make bitsandbytes optimization more stable
+        # https://github.com/huggingface/transformers/issues/14819#issuecomment-1003445038
+        if issubclass(optimizer_class, Optimizer2State):
+            for module in self.modules():
+                if isinstance(module, torch.nn.Embedding):
+                    GlobalOptimManager.get_instance().register_module_override(
+                        module, "weight", {"optim_bits": 32}
+                    )
+
         optimizer = optimizer_class(self.hyperparameters, self.named_parameters())
-    
+
         scheduler_class = schedulers[self.hyperparameters.scheduler]
         scheduler = scheduler_class(self.hyperparameters, optimizer, self.num_training_steps())
 
@@ -360,6 +374,13 @@ class Pipeline(LightningModule):
         # use super logger for synchronization and accumulation
         for k, v in data.items():
             super().log(k, v, batch_size=batch_size, **kwargs)
+
+    def get_trainer_safe(self):
+        r""" Get trainer without raising an error if is not attached yet to the model. """
+        try:
+            return self.trainer
+        except RuntimeError:
+            return None
 
     @classmethod
     def add_argparse_args(cls, parser: FlexibleArgumentParser):

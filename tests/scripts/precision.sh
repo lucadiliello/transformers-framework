@@ -1,5 +1,5 @@
 # test all precisions
-for precision in '16-mixed' '16-true' 'bf16-mixed' 'bf16-true' '32-true' '64-true' 'nf4' 'f4-dq' 'fp4' 'fp4-dq' 'int8' 'int8-training'; do
+for precision in '16-mixed' '16-true' 'bf16-mixed' 'bf16-true' '32-true' '64-true' 'nf4' 'f4-dq' 'fp4' 'fp4-dq' 'int8' 'int8-training' "transformer-engine" "transformer-engine-float16"; do
 
     python -m transformers_framework \
         --pipeline answer_selection \
@@ -25,7 +25,7 @@ for precision in '16-mixed' '16-true' 'bf16-mixed' 'bf16-true' '32-true' '64-tru
         --max_sequence_length 128 \
         --learning_rate 1e-05 \
         --log_every_n_steps 100 \
-        --optimizer fuse_adam \
+        --optimizer adamw \
         --early_stopping \
         --patience 5 \
         \

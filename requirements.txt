@@ -19,3 +19,4 @@ bitsandbytes>=0.41.1
 accelerate>=0.23.0
 deepspeed>=0.11.1
 bleurt-pytorch @ git+https://github.com/lucadiliello/bleurt-pytorch.git@279ca1bb4106bde5a89f0f82723197e23d8446cb
+transformer-engine>=

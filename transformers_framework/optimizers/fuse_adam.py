@@ -1,29 +1,17 @@
 from typing import Generator
 
-from lightning_utilities.core.imports import RequirementCache
-
 from transformers_framework.optimizers.optimizer import Optimizer
 from transformers_framework.utilities.arguments import FlexibleArgumentParser
 from transformers_framework.utilities.classes import ExtendedNamespace
 from transformers_framework.utilities.strategy import check_strategy
 
-
-_DEEPSPEED_AVAILABLE = RequirementCache("deepspeed")
-if _DEEPSPEED_AVAILABLE:
-    from deepspeed.ops.adam import FusedAdam
-else:
-    FusedAdam = object
+from deepspeed.ops.adam import FusedAdam
 
 
 class FuseAdamOptimizer(Optimizer, FusedAdam):
 
     def __init__(self, hyperparameters: ExtendedNamespace, named_parameters: Generator):
         r""" First hyperparameters argument to SuperOptimizer, other args for FusedAdam. """
-
-        assert _DEEPSPEED_AVAILABLE, (
-            "Fuse Adam optimizer needs `deepspeed` to be installed. "
-            "Please run `pip install -r requirements/extras.txt`"
-        )
 
         if not check_strategy(hyperparameters.strategy, "deepspeed"):
             raise ValueError("`FuseAdamOptimizer` should be used only with `deepspeed` strategy.")

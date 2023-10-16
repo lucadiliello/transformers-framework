@@ -16,6 +16,11 @@ Since this library is based on `pytorch-lightning`, this framework will automati
 
 ![](./transformers_framework.svg)
 
+# Main requirements:
+- PyTorch >= 2.1.0
+- CUDA >= 12.1
+- LibCUDNN >= 8.1
+- DeepSpeed >= 0.11.1
 
 # Prepare env
 
